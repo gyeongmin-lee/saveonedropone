@@ -63,3 +63,22 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
+
+---
+
+## 5. Design System (UI 작업 필수 참조)
+
+이 프로젝트는 `docs/design/`에 완성된 디자인 시스템이 있습니다. **UI가 포함된 모든 작업에서 반드시 먼저 참조하세요.**
+
+| 파일 | 용도 |
+|------|------|
+| `docs/design/colors_and_type.css` | 색상·타이포그래피 토큰 (단일 진실 출처) |
+| `docs/design/ui_kits/streamer-native/` | 구현 가능한 React 컴포넌트 (HomeScreen, MatchupScreen, ResultScreen, Sidebar, TopNav, BracketCard, ChatPanel) |
+| `docs/design/README.md` | 전체 디자인 시스템 설명 (색상값, 버튼 스펙, 레이아웃 치수 등) |
+
+**단계별 적용 규칙:**
+- **아키텍처 설계 시**: UI 레이어는 `docs/design/README.md`의 Visual Foundations 섹션을 기준으로 정의
+- **스토리 구현 시**: 해당 화면의 컴포넌트 파일(`ui_kits/streamer-native/*.jsx`)을 읽고 pixel-perfect 구현
+- **코드 리뷰 시**: `colors_and_type.css` 토큰을 직접 쓰고 있는지, 하드코딩된 값이 없는지 확인
+
+**픽셀 퍼펙트 기준:** 디자인 시스템의 토큰값(색상, 간격, 반경)을 임의로 바꾸지 말 것. 변경이 필요하면 먼저 사용자에게 확인.

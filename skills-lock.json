@@ -1,6 +1,12 @@
 {
   "version": 1,
   "skills": {
+    "commit": {
+      "source": "sickn33/antigravity-awesome-skills",
+      "sourceType": "github",
+      "skillPath": "skills/commit/SKILL.md",
+      "computedHash": "3bcf0ec3de92c660eaa10d6882ab0a2bcd25f565492556dcbf92946c09f20f5a"
+    },
     "impeccable": {
       "source": "pbakaus/impeccable",
       "sourceType": "github",

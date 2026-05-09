@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0e0e12;font-family:Inter,sans-serif;display:flex;flex-direction:column;justify-content:center;height:140px;gap:8px;padding:0 32px}
+.input{background:#0a0a0e;color:#e8e6f0;border:1px solid #1f1f28;border-radius:6px;padding:10px 14px;font-family:inherit;font-size:14px;width:100%;box-sizing:border-box;outline:none}
+.input:focus{border-color:#7c3aed}
+.search{position:relative;width:100%}
+.search::before{content:"⌕";position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#9b9aab;font-size:14px}
+.search input{padding-left:34px}
+.lbl{font-family:"JetBrains Mono",monospace;font-size:10px;color:#6b6b7d;text-transform:uppercase;letter-spacing:.15em}
+</style></head><body>
+<div class="lbl">SEARCH</div>
+<div class="search"><input class="input" placeholder="Search brackets, streamers, players..."></div>
+<input class="input" placeholder="Bracket title" style="border-color:#7c3aed">
+</body></html>
