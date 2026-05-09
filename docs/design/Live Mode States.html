@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Streamer Live Mode — states</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  html, body { margin: 0; padding: 0; background: #f0eee9; font-family: 'Inter', system-ui, sans-serif; }
+  * { box-sizing: border-box; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="create-bracket/design-canvas.jsx"></script>
+<script type="text/babel" src="create-bracket/shared.jsx"></script>
+<script type="text/babel" src="live-mode/states.jsx"></script>
+
+<script type="text/babel" data-presets="env,react">
+  const { DesignCanvas, DCSection, DCArtboard, DCPostIt } = window;
+
+  function App() {
+    return (
+      <DesignCanvas>
+        <DCSection
+          id="brief"
+          title="Streamer Live Mode — Matchup states"
+          subtitle="Extension to the existing MatchupScreen + ChatPanel. No separate OBS surface — Live Mode is an opt-in panel inside the same screen the streamer already plays on. ChatPanel is read-only here (compose input removed). %chat badges only render once Live Mode is connected AND vote count ≥ 1. OAuth uses a popup so the in-flight match state survives."
+        >
+          <DCPostIt top={64} right={40} rotate={-2} width={280}>
+            States adapted from the brief: regular · CTA · OAuth popup · connecting · connected (with votes) · connected/no-votes (post-advance) · disconnected mid-session.
+          </DCPostIt>
+        </DCSection>
+
+        <DCSection
+          id="baseline"
+          title="Baseline · regular play"
+          subtitle="Single column. No ChatPanel. No %chat badges. The 'Go Live' CTA in the toolbar is the only Live Mode entry point — desktop only."
+        >
+          <DCArtboard id="regular" label="Regular mode + Go Live CTA" width={1180} height={760}>
+            <LMRegular />
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection
+          id="auth"
+          title="Authorization · popup, not redirect"
+          subtitle="Streamer clicks Go Live → Twitch OAuth opens as a popup window. The matchup screen is dimmed but its state stays intact — a redirect would destroy the in-flight match."
+        >
+          <DCArtboard id="oauth" label="OAuth popup in flight" width={1180} height={760}>
+            <LMOauth />
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection
+          id="active"
+          title="Live Mode active · the four runtime states"
+          subtitle="ChatPanel mounts in the right rail. Read-only; the prototype's compose input is replaced by a footer that points the streamer back to their own Twitch chat."
+        >
+          <DCArtboard id="connecting" label="Connecting · joining channel" width={1180} height={760}>
+            <LMConnecting />
+          </DCArtboard>
+          <DCArtboard id="no-votes" label="Connected · no votes yet" width={1180} height={760}>
+            <LMConnectedNoVotes />
+          </DCArtboard>
+          <DCArtboard id="connected" label="Connected · live tally" width={1180} height={760}>
+            <LMConnected />
+          </DCArtboard>
+          <DCArtboard id="disconnected" label="Disconnected mid-match" width={1180} height={760}>
+            <LMDisconnected />
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection
+          id="rules"
+          title="Behavior rules · checked into the design"
+          subtitle="Each state respects the brief's invariants — listed inline so devs can match what's drawn against the contract."
+        >
+          <DCArtboard id="rules-card" label="Live Mode rules" width={1180} height={420}>
+            <RulesCard />
+          </DCArtboard>
+        </DCSection>
+      </DesignCanvas>
+    );
+  }
+
+  function RulesCard() {
+    const rules = [
+      ['Layout', 'Regular: 1fr · Live Mode: 1fr 320px. ChatPanel mounts/unmounts; nothing else shifts.'],
+      ['%chat badges', 'Render only when liveActive ✓ AND chatState=connected ✓ AND totalVotes ≥ 1.'],
+      ['ChatPanel input', 'Removed. Footer reads "READ-ONLY · chat in twitch.tv/<channel>" — streamers chat in their own client.'],
+      ['Match advance', 'A/D resets vote tally to 0 immediately. WebSocket stays open; only the counter resets — see "Connected · no votes yet".'],
+      ['OAuth', 'Popup window only. Page dims behind it. Redirect-based flow is forbidden because it nukes the in-flight match.'],
+      ['Disconnect', 'Banner above the tally; chat list dims to last-known. Match itself is unaffected — votes resume on reconnect.'],
+      ['YouTube chat', 'Out of scope for MVP Live Mode (Growth scope). YouTube URLs only feed the Create Bracket parser.'],
+      ['Mobile', 'Live Mode is desktop-only · the Go Live CTA is hidden below 1024px.'],
+    ];
+    return (
+      <div style={{ width: 1180, height: 420, background: '#0e0e12', color: '#e8e6f0', padding: '28px 36px', fontFamily: 'Inter, sans-serif', overflow: 'hidden' }}>
+        <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#b794f4', fontWeight: 600, marginBottom: 8 }}>● contract</div>
+        <h2 style={{ fontSize: 22, fontWeight: 800, margin: '0 0 16px', letterSpacing: '-0.02em' }}>Behavior rules</h2>
+        <div style={{ background: '#18181f', borderRadius: 10, boxShadow: '0 0 0 1px rgba(255,255,255,0.06)', overflow: 'hidden' }}>
+          {rules.map(([k, v], i) => (
+            <div key={k} style={{
+              display: 'grid', gridTemplateColumns: '180px 1fr', padding: '12px 18px',
+              borderBottom: i === rules.length - 1 ? 'none' : '1px solid #1f1f28', alignItems: 'baseline', gap: 16,
+            }}>
+              <div style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: 11, color: '#b794f4', letterSpacing: '0.08em', fontWeight: 700 }}>{k}</div>
+              <div style={{ fontSize: 13, color: '#c4c2d2', lineHeight: 1.5 }}>{v}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

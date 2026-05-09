@@ -2,7 +2,7 @@
 // Dark UI with rounded cards. Purple+green dual accent. Familiar to streamers.
 // Differentiator: chat overlay, OBS source URL, vote ratio live, follower hooks.
 
-function StreamerTheme({ screen, onScreenChange }) {
+function StreamerTheme({ screen, onScreenChange, t }) {
   return (
     <div className="theme-streamer" style={{
       width: '100%', minHeight: '100%', background: '#0e0e12',
@@ -84,7 +84,7 @@ function StreamerTheme({ screen, onScreenChange }) {
       </div>
 
       {screen === 'home' && <StreamerHome />}
-      {screen === 'matchup' && <StreamerMatchup />}
+      {screen === 'matchup' && <StreamerMatchup liveState={t?.liveState || 'regular'} />}
       {screen === 'result' && <StreamerResult />}
     </div>
   );
@@ -294,9 +294,18 @@ function StreamerHome() {
   );
 }
 
-function StreamerMatchup() {
+function StreamerMatchup({ liveState = 'regular' }) {
   const { C, placeholderBg } = window.KPOP_DATA;
   const left = C.jw, right = C.sr;
+
+  const isLive = liveState !== 'regular';
+  const showBadges = liveState === 'connected';
+  const votesA = liveState === 'connected' ? 62 : 0;
+  const votesB = liveState === 'connected' ? 38 : 0;
+  const totalVotes = votesA + votesB;
+  const pctA = votesA, pctB = votesB;
+  const dotColor = liveState === 'connected' || liveState === 'no_votes' ? '#38e07b'
+                 : liveState === 'connecting' ? '#ffb84d' : '#ff5f5f';
 
   // Mock chat messages
   const chat = [
@@ -306,11 +315,15 @@ function StreamerMatchup() {
     { user: 'minty',      color: '#5cdcff', msg: 'A all the way', vote: 'A' },
     { user: 'haoslive',   color: '#ffb84d', msg: 'gotta save Seora here', vote: 'B' },
     { user: 'softdrop',   color: '#ff5f5f', msg: 'jiwoo for sure', vote: 'A' },
-    { user: 'rambii',     color: '#7cf2c4', msg: 'either way it\'s a banger', vote: null },
+    { user: 'rambii',     color: '#7cf2c4', msg: "either way it's a banger", vote: null },
   ];
+  const visibleChat = liveState === 'no_votes' ? chat.filter(m => !m.vote).slice(0, 3)
+                    : liveState === 'disconnected' ? chat.slice(0, 4)
+                    : liveState === 'connecting' ? []
+                    : chat;
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', minHeight: 'calc(100vh - 56px)' }}>
+    <div style={{ display: 'grid', gridTemplateColumns: isLive ? '1fr 320px' : '1fr', minHeight: 'calc(100vh - 56px)' }}>
       {/* Main matchup area */}
       <div style={{ display: 'flex', flexDirection: 'column' }}>
         {/* Match info bar */}
@@ -351,30 +364,26 @@ function StreamerMatchup() {
                   position: 'absolute', inset: 0,
                   background: 'linear-gradient(180deg, transparent 40%, rgba(14,14,18,0.92) 100%)',
                 }}></div>
-                {/* Vote percent badge */}
-                <div style={{
-                  position: 'absolute', top: 16, [i === 0 ? 'left' : 'right']: 16,
-                  background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)',
-                  padding: '8px 14px', borderRadius: 999,
-                  fontSize: 13, fontWeight: 700,
-                }}>
-                  <span className={i === 0 ? 'green' : 'purple'}>{i === 0 ? '62%' : '38%'} chat</span>
-                </div>
+                {/* Vote percent badge — only when connected with votes */}
+                {showBadges && (
+                  <div style={{
+                    position: 'absolute', top: 16, [i === 0 ? 'left' : 'right']: 16,
+                    background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(8px)',
+                    padding: '8px 14px', borderRadius: 999,
+                    fontSize: 13, fontWeight: 700,
+                  }}>
+                    <span className={i === 0 ? 'green' : 'purple'}>{i === 0 ? '62%' : '38%'} chat</span>
+                  </div>
+                )}
                 {/* Name plate */}
                 <div style={{
                   position: 'absolute', bottom: 24, left: 24, right: 24,
                 }}>
-                  <div className="mono" style={{
-                    fontSize: 11, letterSpacing: '0.15em', textTransform: 'uppercase',
-                    color: i === 0 ? '#38e07b' : '#b794f4', marginBottom: 8, fontWeight: 700,
-                  }}>{c.group}</div>
+
                   <div className="display" style={{ fontSize: 56, marginBottom: 8, lineHeight: 1 }}>
                     {c.name}
                   </div>
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <span style={{ background: '#1f1f28', padding: '4px 10px', borderRadius: 999, fontSize: 11, fontWeight: 600 }}>Seed #{i === 0 ? 3 : 11}</span>
-                    <span style={{ background: '#1f1f28', padding: '4px 10px', borderRadius: 999, fontSize: 11, fontWeight: 600 }}>Win {i === 0 ? 67 : 54}%</span>
-                  </div>
+
                 </div>
               </div>
               <button className="purple-bg" style={{
@@ -398,72 +407,183 @@ function StreamerMatchup() {
             <button style={toolbarBtn()}>↻ Restart</button>
             <button style={toolbarBtn()}>⤴ Skip</button>
           </div>
-          <div className="mono" style={{ fontSize: 11, color: '#6b6b7d' }}>
-            Press A / D · or click either side
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            {isLive && (
+              <span style={{
+                fontFamily: 'JetBrains Mono, monospace', fontSize: 10,
+                color: '#38e07b', letterSpacing: '0.1em',
+              }}>✓ Saved locally</span>
+            )}
+            {!isLive ? (
+              <button style={{
+                padding: '7px 14px', fontSize: 12, fontWeight: 700,
+                background: 'transparent', color: '#b794f4',
+                border: '1px solid #7c3aed', borderRadius: 6, cursor: 'pointer',
+                fontFamily: 'inherit', display: 'inline-flex', alignItems: 'center', gap: 6,
+              }}>
+                <span style={{ width: 6, height: 6, borderRadius: 999, background: '#b794f4' }} />
+                Go Live
+              </button>
+            ) : (
+              <button style={{
+                padding: '7px 14px', fontSize: 12, fontWeight: 700,
+                background: 'rgba(124,58,237,0.18)', color: '#b794f4',
+                border: '1px solid #7c3aed', borderRadius: 6, cursor: 'pointer',
+                fontFamily: 'inherit', display: 'inline-flex', alignItems: 'center', gap: 8,
+              }}>
+                <span style={{
+                  width: 8, height: 8, borderRadius: 999, background: dotColor,
+                  boxShadow: liveState === 'connected' ? `0 0 0 3px ${dotColor}33` : 'none',
+                }} />
+                {liveState === 'connecting' ? 'Connecting' : liveState === 'disconnected' ? 'Disconnected' : 'Live'}
+                {' · twitch.tv/sookykim'}
+                <span style={{ color: '#6b6b7d', fontSize: 10, marginLeft: 4 }}>▾</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Chat panel — the differentiator */}
-      <div style={{ borderLeft: '1px solid #1f1f28', display: 'flex', flexDirection: 'column' }}>
-        <div style={{
-          padding: '14px 16px', borderBottom: '1px solid #1f1f28',
-          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span className="green" style={{ fontSize: 8 }}>●</span>
-            <span style={{ fontSize: 13, fontWeight: 600 }}>Stream Chat</span>
-            <span className="mono" style={{ fontSize: 11, color: '#6b6b7d' }}>1,240</span>
-          </div>
-          <button style={{ background: 'transparent', border: 'none', color: '#6b6b7d', cursor: 'pointer', fontSize: 16 }}>⚙</button>
-        </div>
-
-        {/* Live vote tally */}
-        <div style={{ padding: '14px 16px', borderBottom: '1px solid #1f1f28' }}>
-          <div className="mono" style={{ fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase', color: '#6b6b7d', marginBottom: 8, fontWeight: 600 }}>
-            Live chat vote
-          </div>
-          <div style={{ display: 'flex', height: 32, borderRadius: 6, overflow: 'hidden' }}>
-            <div style={{
-              width: '62%', background: '#38e07b', color: '#0a0a0e',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 12, fontWeight: 700,
-            }}>A · 62%</div>
-            <div style={{
-              width: '38%', background: '#7c3aed',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 12, fontWeight: 700,
-            }}>B · 38%</div>
-          </div>
-          <div className="mono" style={{ fontSize: 10, color: '#6b6b7d', marginTop: 6 }}>
-            Vote with !A or !B in chat
-          </div>
-        </div>
-
-        {/* Messages */}
-        <div style={{ flex: 1, overflow: 'auto', padding: '8px 16px' }}>
-          {chat.map((m, i) => (
-            <div key={i} style={{ padding: '4px 0', fontSize: 13, lineHeight: 1.45 }}>
-              <span style={{ color: m.color, fontWeight: 700 }}>{m.user}</span>
-              {m.vote && <span style={{
-                display: 'inline-block', margin: '0 6px', padding: '1px 5px',
-                fontSize: 9, fontWeight: 700, borderRadius: 3,
-                background: m.vote === 'A' ? '#38e07b' : '#7c3aed',
-                color: m.vote === 'A' ? '#0a0a0e' : '#fff',
-              }}>VOTE {m.vote}</span>}
-              <span style={{ color: '#9b9aab' }}>: {m.msg}</span>
+      {/* Chat panel — only when live */}
+      {isLive && (
+        <div style={{ borderLeft: '1px solid #1f1f28', display: 'flex', flexDirection: 'column' }}>
+          {/* Header */}
+          <div style={{
+            padding: '14px 16px', borderBottom: '1px solid #1f1f28',
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 8, color: dotColor }}>●</span>
+              <span style={{ fontSize: 13, fontWeight: 600 }}>Twitch chat</span>
+              {(liveState === 'connected' || liveState === 'no_votes') && (
+                <span className="mono" style={{ fontSize: 11, color: '#6b6b7d' }}>1,240</span>
+              )}
             </div>
-          ))}
-        </div>
+            <button style={{ background: 'transparent', border: 'none', color: '#6b6b7d', cursor: 'pointer', fontSize: 16 }}>⚙</button>
+          </div>
 
-        <div style={{ padding: 12, borderTop: '1px solid #1f1f28' }}>
-          <input type="text" placeholder="Send a message" style={{
-            width: '100%', padding: '8px 10px', background: '#0a0a0e',
-            color: '#e8e6f0', border: '1px solid #1f1f28', borderRadius: 6,
-            fontSize: 13, fontFamily: 'inherit', boxSizing: 'border-box', outline: 'none',
-          }} />
+          {/* Vote tally */}
+          <div style={{ padding: '14px 16px', borderBottom: '1px solid #1f1f28' }}>
+            <div className="mono" style={{
+              fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase',
+              color: '#6b6b7d', marginBottom: 8, fontWeight: 600,
+              display: 'flex', justifyContent: 'space-between',
+            }}>
+              <span>Live chat vote</span>
+              {totalVotes > 0 && <span style={{ color: '#e8e6f0' }}>{totalVotes}</span>}
+            </div>
+            {totalVotes === 0 ? (
+              <div style={{
+                height: 32, borderRadius: 6, background: '#0a0a0e',
+                border: '1px dashed #1f1f28', display: 'flex',
+                alignItems: 'center', justifyContent: 'center',
+                fontSize: 11, color: '#6b6b7d', fontFamily: 'JetBrains Mono, monospace',
+              }}>
+                {liveState === 'connecting' ? 'Waiting for connection…'
+               : liveState === 'disconnected' ? 'Vote count paused'
+               : 'Waiting for first !A or !B'}
+              </div>
+            ) : (
+              <div style={{ display: 'flex', height: 32, borderRadius: 6, overflow: 'hidden' }}>
+                <div style={{
+                  width: pctA + '%', background: '#38e07b', color: '#0a0a0e',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 12, fontWeight: 700,
+                }}>A · {pctA}%</div>
+                <div style={{
+                  width: pctB + '%', background: '#7c3aed', color: '#fff',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: 12, fontWeight: 700,
+                }}>B · {pctB}%</div>
+              </div>
+            )}
+            <div className="mono" style={{ fontSize: 10, color: '#6b6b7d', marginTop: 6 }}>
+              {liveState === 'connected' || liveState === 'no_votes'
+                ? 'Viewers vote with !A or !B in chat. Resets on next match.'
+                : liveState === 'connecting' ? '—'
+                : liveState === 'disconnected' ? 'Last tally · attempting to reconnect' : '—'}
+            </div>
+          </div>
+
+          {/* Disconnect banner */}
+          {liveState === 'disconnected' && (
+            <div style={{
+              padding: '10px 16px', background: 'rgba(255,95,95,0.1)',
+              borderBottom: '1px solid rgba(255,95,95,0.25)',
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8,
+            }}>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: '#ff5f5f', marginBottom: 2 }}>Connection dropped</div>
+                <div style={{ fontSize: 11, color: '#c4c2d2', lineHeight: 1.4 }}>Match state is safe. Votes will resume once we reconnect.</div>
+              </div>
+              <button style={{
+                padding: '5px 10px', fontSize: 11, fontWeight: 700, background: '#ff5f5f',
+                color: '#0a0a0e', border: 'none', borderRadius: 5, cursor: 'pointer',
+                fontFamily: 'inherit', whiteSpace: 'nowrap',
+              }}>Reconnect</button>
+            </div>
+          )}
+
+          {/* Messages */}
+          <div style={{
+            flex: 1, overflow: 'auto',
+            padding: liveState === 'connecting' ? 0 : '8px 16px',
+            opacity: liveState === 'disconnected' ? 0.4 : 1,
+            position: 'relative',
+          }}>
+            {liveState === 'connecting' ? (
+              <div style={{
+                position: 'absolute', inset: 0, display: 'flex',
+                flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                gap: 8, textAlign: 'center', padding: 24,
+              }}>
+                <div style={{
+                  width: 28, height: 28, borderRadius: 999,
+                  border: '2px solid #1f1f28', borderTopColor: '#b794f4',
+                  animation: 'sm-spin 0.9s linear infinite',
+                }} />
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#e8e6f0' }}>Connecting to Twitch chat</div>
+                <div style={{ fontSize: 11, color: '#6b6b7d', lineHeight: 1.5 }}>Joining channel · listening for !A / !B</div>
+                <style>{`@keyframes sm-spin { to { transform: rotate(360deg) } }`}</style>
+              </div>
+            ) : (
+              <React.Fragment>
+                {visibleChat.map((m, i) => (
+                  <div key={i} style={{ padding: '4px 0', fontSize: 13, lineHeight: 1.45 }}>
+                    <span style={{ color: m.color, fontWeight: 700 }}>{m.user}</span>
+                    {m.vote && <span style={{
+                      display: 'inline-block', margin: '0 6px', padding: '1px 5px',
+                      fontSize: 9, fontWeight: 700, borderRadius: 3,
+                      background: m.vote === 'A' ? '#38e07b' : '#7c3aed',
+                      color: m.vote === 'A' ? '#0a0a0e' : '#fff',
+                    }}>VOTE {m.vote}</span>}
+                    <span style={{ color: '#9b9aab' }}>: {m.msg}</span>
+                  </div>
+                ))}
+                {liveState === 'no_votes' && (
+                  <div style={{
+                    marginTop: 10, padding: '10px 12px',
+                    background: 'rgba(124,58,237,0.08)', borderRadius: 6,
+                    fontSize: 11, color: '#b794f4',
+                    fontFamily: 'JetBrains Mono, monospace', lineHeight: 1.5,
+                  }}>↻ New match · counter reset to 0. Chat connection still open.</div>
+                )}
+              </React.Fragment>
+            )}
+          </div>
+
+          {/* Read-only footer */}
+          <div style={{
+            padding: '10px 16px', borderTop: '1px solid #1f1f28', background: '#0a0a0e',
+            fontFamily: 'JetBrains Mono, monospace', fontSize: 10,
+            color: '#6b6b7d', letterSpacing: '0.08em',
+            display: 'flex', justifyContent: 'space-between',
+          }}>
+            <span>READ-ONLY · chat in twitch.tv/sookykim</span>
+            <span>↗</span>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 
@@ -721,8 +841,10 @@ function StreamerResult() {
                         fontSize: 11, fontWeight: 700,
                         color: isWinner ? '#38e07b' : '#b794f4',
                       }}>{pickC.name}</span>
-                      {isWinner && <span className="mono" style={{ fontSize: 9, color: '#38e07b', opacity: 0.7 }}>SAME AS YOU</span>}
-                      <span style={{ fontSize: 10, opacity: 0.6, marginLeft: 2 }}>→</span>
+                      <span style={{
+                        fontSize: 11, marginLeft: 2, fontWeight: 700,
+                        color: isWinner ? '#38e07b' : '#b794f4',
+                      }}>→</span>
                     </button>
                   </div>
                   <div style={{ fontSize: 13, color: '#e8e6f0', lineHeight: 1.5, marginBottom: 10 }}>

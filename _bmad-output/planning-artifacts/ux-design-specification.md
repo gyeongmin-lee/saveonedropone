@@ -65,7 +65,7 @@ Save One Drop One은 스트리머가 준비 없이 방송에 올릴 수 있는 1
 
 ### Key Design Challenges
 
-- 기존 UI kit은 Home, Matchup, Result 중심이라 streamer control, live chat voting, comments, report/takedown, create flow, onboarding, admin flow가 비어 있다.
+- 기존 UI kit은 Home, Matchup, Result 중심이라 streamer live mode, live chat voting, comments, report/takedown, create flow, onboarding, admin flow가 비어 있다.
 - OBS는 1920x1080 고정 캔버스에서 안정성이 우선이고, 일반 플레이는 모바일/태블릿/데스크톱 반응형이 필요하다.
 - 익명 플레이와 로그인 생성 권한이 섞여 있으므로 CTA와 권한 설명을 마찰 없이 분리해야 한다.
 - UGC moderation 상태는 공개 UI, SEO, OG, 댓글, 광고 eligibility까지 한 번에 반영되어야 한다.
@@ -73,10 +73,48 @@ Save One Drop One은 스트리머가 준비 없이 방송에 올릴 수 있는 1
 
 ### Design Opportunities
 
-- 브라켓 선택 순간부터 "방송에 바로 올릴 수 있음"을 확인시키는 OBS URL, viewer link를 하나의 방송 시작 패널로 묶는다.
+- 브라켓 선택 순간부터 "방송에 바로 올릴 수 있음"을 확인시키는 Matchup 시작, Go Live 진입, viewer link를 하나의 방송 시작 패널로 묶는다.
 - Matchup 화면의 대칭 구조를 일반 플레이, OBS 화면, live chat voting 상태에서 공유해 학습 비용을 낮춘다.
 - 결과 화면은 정적 승자 발표가 아니라 "내 결과가 틀렸다고 말하게 만드는" 공유/댓글/재플레이 허브가 되어야 한다.
 - 신고/비공개/takedown은 별도 관리자 도구로 숨기되, 공개 페이지에서는 사용자가 이해할 수 있는 최소한의 상태 메시지만 노출한다.
+
+---
+
+## Implementation Handoff Policy
+
+This UX specification defines product intent, required user journeys, required states, accessibility expectations, and acceptance criteria.
+
+It is not the source of truth for visual implementation details. When implementing screens or components, dev agents must read the relevant files in `docs/design` directly and extract layout, spacing, typography, color, component composition, and interaction patterns from those design artifacts.
+
+Use this document for:
+
+- which journeys must exist
+- which UI states must be handled
+- which surfaces are MVP vs Growth
+- accessibility and responsive requirements
+- route-level UX implications
+- acceptance criteria
+
+Use `docs/design` for:
+
+- visual hierarchy
+- layout grammar
+- component anatomy
+- color and type tokens
+- spacing, radius, and surface treatment
+- existing JSX/HTML patterns
+- create flow, live mode, matchup, home, and result visual references
+
+If this specification conflicts with `docs/design` on visual details, prefer `docs/design`.
+If this specification conflicts with PRD or architecture on product behavior, resolve against PRD/architecture before implementation.
+
+---
+
+## Design Artifact Source
+
+All visual implementation details live in `docs/design`. This UX specification intentionally avoids duplicating token values, component anatomy, layout measurements, and visual styling rules that can drift from those artifacts.
+
+Dev agents should use this document to understand product UX requirements, then inspect the relevant `docs/design` files before implementing any screen or component.
 
 ---
 
@@ -104,18 +142,40 @@ loading, empty, error, offline, removed, private, rate-limited 상태는 사용�
 
 ---
 
-## Visual Reference Contract
+## Acceptance Criteria for UX Implementation
 
-모든 MVP 화면은 `docs/design`의 `Streamer Native` 방향을 확장한다. 새 화면을 만들 때도 별도 디자인 시스템을 만들지 않고 기존 토큰, 레이아웃 문법, 카피 톤을 먼저 적용한다.
+### Core Journey
 
-- Surface stack: page는 `#0e0e12`, nav/input은 `#0a0a0e`, cards/panels는 `#18181f`, secondary/hover surfaces는 `#1f1f28`을 기본으로 한다.
-- Accent vocabulary: purple `#7c3aed`는 primary action, active state, brand emphasis에 쓰고, green `#38e07b`는 live, win, positive state에 쓴다.
-- Layout grammar: 56px sticky top nav, 220px browse sidebar, 320px live/vote right rail, 24-32px content gutters를 기준으로 파생한다.
-- Shape/elevation: cards는 10px radius, matchup/media tiles는 12px radius, buttons/inputs는 6px radius를 기본으로 한다. elevation은 shadow가 아니라 `rgba(255,255,255,0.06)` hairline으로 만든다.
-- Typography: Inter를 body/display 전반에 사용하고, JetBrains Mono는 section labels, stats/counters, vote percentages, timers, keyboard hints에만 제한적으로 사용한다.
-- Motion: 기본 표면은 정적이다. 선택/advance feedback은 150ms 안팎의 state confirmation으로 제한하고, layout shift나 spectacle animation을 만들지 않는다.
-- Imagery: thumbnail과 contestant media는 edge-to-edge로 두고, caption legibility를 위해 bottom protection gradient를 사용한다. real image가 없을 때는 기존 diagonal-stripe placeholder 문법을 유지한다.
-- New surfaces: Streamer Control, OBS capture layout, Live Chat Voting, Create, Admin 화면은 이 계약을 먼저 따른 뒤 필요한 패턴만 추가한다.
+- A new visitor can select a category, start a bracket, complete a 16강 tournament, and reach a result without creating an account.
+- A returning visitor with incomplete local progress sees a clear resume/restart choice.
+- Result page supports copy link, image export, direct social share, Play again, comments, and report entry.
+
+### Streamer Journey
+
+- A streamer can open a Bracket Pack, activate live mode, and connect their Twitch channel from the matchup screen.
+- Once connected, !A/!B chat votes are counted and displayed in real time on the matchup screen.
+- Streamer advances the bracket with A/D keys; the same screen is shared to viewers via OBS screen capture.
+
+### UGC Journey
+
+- Creator login is requested only when entering create/publish flow.
+- YouTube URL parse failure has manual fallback.
+- Image URL/upload failure explains recovery.
+- Non-power-of-two entry count shows bye preview, not a blocking error.
+- Publish completion returns the public bracket URL.
+
+### Safety Journey
+
+- Any public bracket/result/comment has a report path.
+- Admin can see report queue, target preview, status, and action history.
+- Hide/takedown/ad restriction actions communicate public visibility, noindex/cache, and ad effects.
+
+### Accessibility
+
+- Core play flow works with keyboard only.
+- Focus is visible across dark UI.
+- Automated axe critical/serious issues are 0 on core routes.
+- Screen reader users can understand current round, contestants, selected action, result, and modal errors.
 
 ---
 
@@ -132,7 +192,7 @@ loading, empty, error, offline, removed, private, rate-limited 상태는 사용�
 | Result page | `/results/:resultId` | 시청자, 스트리머 | SSR | 챔피언, 경로, 통계, 공유, 댓글 |
 | Full Community Ranking View | Result 내 modal | 시청자 | Client overlay | 전체 N명 커뮤니티 선택 % 바 차트 랭킹 |
 | Full Bracket Modal | Result 내 modal | 시청자 | Client overlay | 전체 브라켓 트리 zoom/drag, 라운드 범위 필터, Save Image |
-| Create bracket flow | `/create`, `/create/new` | UGC 제작자 | SSR + CSR form | 브라켓 메타, 항목, 공개 설정, 공개 브라켓 URL 생성 |
+| Create bracket flow | `/create`, `/create/new` | UGC 제작자 | SSR + CSR form | 단일 페이지 Composer — 스마트 붙여넣기, 항목 큐, 브라켓 설정, 공개 URL 생성 |
 | Auth callback / sign-in sheet | `/auth/callback`, modal | 제작자 | SSR/action | Google/Twitch 로그인 |
 
 ### Growth Screens
@@ -162,7 +222,7 @@ flowchart TD
   D --> D2{Go Live 버튼 클릭?}
   D2 -- No --> G[A/D or click 선택 — regular mode]
   D2 -- Yes --> E[Twitch OAuth — popup 방식]
-  E --> F[!A/!B 채팅 투표 집계 시작 + ChatPanel 표시]
+  E --> F[!A/!B 채팅 투표 집계 시작]
   F --> G
   G --> H{Tournament complete?}
   H -- No --> G
@@ -223,47 +283,38 @@ flowchart TD
 
 ### Journey 3: UGC Bracket Creation Flow
 
-**Goal:** 제작자가 YouTube URL과 이미지 URL로 Bracket Pack을 빠르게 만들고 공개한다.
+**Goal:** 제작자가 단일 페이지 Composer에서 스마트 붙여넣기로 항목을 구성하고 Bracket Pack을 빠르게 공개한다.
 
 ```mermaid
 flowchart TD
   A[Create CTA] --> B{로그인 상태?}
   B -- No --> C[Google / Twitch sign-in]
-  C --> D[Create bracket metadata]
+  C --> D[단일 페이지 Composer]
   B -- Yes --> D
-  D --> E[Add entries]
-  E --> F{입력 유형}
-  F -- YouTube URL --> G[Parse title thumbnail start second]
-  F -- Image URL --> H[Preview image]
-  F -- Upload --> I[Validate type size]
-  G --> J{파싱 성공?}
-  J -- No --> K[Manual title/image fallback]
-  J -- Yes --> L[Entry list]
-  H --> L
-  I --> L
-  K --> L
-  L --> M{항목 수 충분?}
-  M -- No --> E
-  M -- Yes --> N[Tournament size / byes preview]
-  N --> O[Visibility: public/private]
-  O --> P[Preview mode]
-  P --> Q[Publish]
-  Q --> R[Public bracket URL]
+  D --> E[스마트 붙여넣기 — URL/텍스트/배치 이미지]
+  E --> F[큐에 항목 생성]
+  F --> G{미완료 항목?}
+  G -- Yes --> H[우측 레일: 소스 편집 / 제목 수정]
+  H --> G
+  G -- No --> I[우측 레일: 브라켓 정보·시딩·공개 설정]
+  I --> J[Publish]
+  J --> K[Published 화면 + 공개 URL]
 ```
 
 **Required UI states**
 
 - Auth: provider pending, denied, callback failed
-- Metadata: missing title, slug conflict, category/tag required
 - Entry parse: pending, quota/rate limited, unsupported URL, thumbnail unavailable, CORS/hotlink failure
-- Image upload: invalid type, over 10MB, upload failed
-- Publish: public, private, under review, blocked by validation
+- Image upload: invalid type, over 10MB, batch upload failed
+- Incomplete entry: amber 경고 배지, source 없음, title 없음
+- Publish: blocked(미완료 항목 존재), public, private, under review
 
 **Key UX requirements**
 
-- 항목 추가는 table/form보다 "paste queue" 중심이어야 한다. URL을 붙여넣으면 row가 생기고 각 row에서 title/image/start second를 수정한다.
-- 2의 거듭제곱이 아닌 항목 수는 오류가 아니라 preview로 설명한다. 예: "133 entries -> byes will be assigned automatically."
-- 공개 전 preview는 Home card, matchup card, result share preview가 어떻게 보일지 보여준다.
+- 단일 페이지 Composer에서 entry intake, bracket settings, source editing, publish readiness를 한 흐름으로 처리한다.
+- 스마트 붙여넣기: 줄당 URL → YT/이미지 자동 파싱, 일반 텍스트 → 플레이스홀더 항목. 배치 이미지 업로드(최대 64파일) 스트립 병행 제공.
+- 미완료 항목(소스 없음·제목 없음)은 명확한 경고와 publish blocking 상태를 제공한다. 시딩: Randomized(기본) / Preset(드래그 재정렬).
+- 비-2의 거듭제곱 항목 수는 byes 자동 배정을 설명한다.
 
 ### Journey 4: Moderation, Report, Takedown Flow
 
@@ -324,7 +375,7 @@ flowchart TD
 
 **Notes**
 
-- 기존 `HomeScreen.jsx`, `Sidebar.jsx`, `BracketCard.jsx`, `TopNav.jsx`를 기반으로 확장한다.
+- Visual and component reference는 `docs/design`에서 직접 확인한다.
 - 모바일에서는 sidebar를 category drawer 또는 horizontal category rail로 접는다.
 
 ### Matchup Play
@@ -333,11 +384,10 @@ flowchart TD
 
 **Primary content**
 
-- Round/match progress bar or dots
-- Two contestant cards
-- VS divider
+- Match info bar: 브라켓 이름, Round/Match 진행 도트, 경과 타이머
+- Two contestant cards + "Save {name} →" 선택 버튼 (각 카드 하단)
 - Keyboard hint: "Press A / D · or click either side"
-- Toolbar: undo, restart, share current bracket, report, Go Live (streamer mode 진입)
+- Toolbar: undo, restart, share, report, Go Live (streamer mode 진입), "✓ Saved locally" 상태 텍스트
 - Optional community/vote hint if session-linked
 
 **States**
@@ -349,11 +399,10 @@ flowchart TD
 
 **Notes**
 
-- 기존 `MatchupScreen.jsx`를 기반으로 한다.
-- **레이아웃:** regular mode는 `1fr` 단일 컬럼. streamer live mode 활성화 시 `1fr 320px`로 전환 (ChatPanel 표시).
-- **ContestantCard `%chat` 배지:** streamer live mode가 활성화되고 chat이 연결된 상태에서만 표시. regular mode에서는 렌더링하지 않음.
-- **Live mode 진입점:** Matchup toolbar의 "Go Live" 버튼. 클릭 시 Twitch OAuth → 연동 완료 후 ChatPanel 슬라이드인. 세션 중 비활성화 시 ChatPanel 콜랩스, 배지 숨김, tally 초기화.
-- Viewer vote summary는 기존 `ChatPanel`/`VoteTally`의 320px right rail, mono label, purple/green split bar 문법을 계승한다.
+- Visual and component reference는 `docs/design`에서 직접 확인한다.
+- **Live mode 진입점:** Matchup toolbar의 "Go Live" 버튼.
+- Chat vote indicators are shown only while streamer live mode is active and chat is connected.
+- 세션 중 live mode 비활성화 시 vote UI를 숨기고 tally를 초기화한다.
 
 ### Streamer Live Mode (Matchup 내 패널)
 
@@ -368,11 +417,12 @@ flowchart TD
 
 **States**
 
-- Not connected: 채널 연동 CTA 표시
-- Connecting: 인증 pending
-- Connected: 실시간 집계 표시
-- Disconnected mid-session: last known tally 표시 + reconnect 유도
-- No votes yet: "Waiting for chat votes..."
+- **regular**: Live Mode 없음, "Go Live" 버튼, 단일 컬럼
+- **oauth**: popup OAuth 진행 중, `channel:bot` scope 동의 필요
+- **connecting**: chat connection pending
+- **connected**: 실시간 집계, vote count, 채팅 피드 표시
+- **no_votes**: 연결됨 + 0표 (매치 전환 직후). "↻ New match · counter reset to 0. Chat connection still open."
+- **disconnected**: 마지막 tally 유지, 배너 "Match state is safe. Votes will resume once we reconnect.", Reconnect 버튼
 
 **Notes**
 
@@ -381,9 +431,11 @@ flowchart TD
 - 키보드 focus ring을 숨기면 안 된다. 방송 중 실수 방지가 운영 안정성에 중요하다.
 - **OAuth 방식:** "Go Live" 클릭 시 OAuth는 반드시 popup 방식으로 구현한다. redirect는 현재 매치 상태를 파괴한다.
 - **OAuth scope:** Live Mode 채팅 연동은 bracket creation 로그인(FR47)과 별개의 OAuth flow다. Twitch 채팅 수집 동의가 필요하며, 구현 scope는 architecture.md의 Twitch EventSub/OAuth 계약을 따른다. 계정 생성 권한이 아님.
-- **`%chat` 배지 초기값:** vote count = 0일 때 contestant card의 `%chat` 배지는 렌더링하지 않는다. 1표 이상부터 표시.
+- vote count = 0일 때 contestant-level chat percentage indicator는 렌더링하지 않는다. 1표 이상부터 표시.
 - **매치 전환 시 tally 리셋:** 스트리머가 A/D로 매치를 advance할 때 vote tally는 즉시 0으로 리셋된다. 채팅 커넥션은 유지하되 카운터만 초기화.
-- **ChatPanel 구성:** 채팅 메시지 피드 + VoteTally bar (read-only). 텍스트 입력창 없음 — 스트리머와 시청자는 Twitch 앱에서 직접 채팅한다.
+- Live mode chat display is read-only. 스트리머와 시청자는 Twitch 앱에서 직접 채팅한다.
+- OAuth popup UI는 `channel:bot` scope와 채팅 수집 목적을 사용자가 이해할 수 있게 설명한다.
+- Live mode status copy includes connection state and channel identity.
 - **Streamer Live Mode는 데스크탑 전용:** 모바일에서는 Go Live 버튼을 노출하지 않는다. 방송은 데스크탑에서만 진행한다.
 
 ### Result Page
@@ -410,7 +462,7 @@ flowchart TD
 
 **Notes**
 
-- 기존 `ResultScreen.jsx`를 기반으로 확장한다. Comments, Share, Report는 `theme-streamer.jsx`에 이미 디자인되어 있으므로 추출 후 missing states만 추가한다.
+- Visual and component reference는 `docs/design`에서 직접 확인한다.
 - SSR metadata가 핵심이므로 결과 title, description, canonical, og tags가 초기 HTML에 있어야 한다.
 
 ### Full Community Ranking View
@@ -444,112 +496,28 @@ flowchart TD
 - Zoom in/out 인터랙션
 - Save Image: pending, complete, failed
 
----
+### Create Bracket Flow
 
-## Component Strategy
+**Purpose:** UGC 제작자가 단일 페이지 Composer에서 Bracket Pack을 생성하고 공개한다.
 
-### Existing UI Kit Coverage
+**Primary content**
 
-| Existing component | Use as-is | Extend for MVP |
-|---|---:|---|
-| `TopNav.jsx` | Yes | Add create CTA, responsive search behavior, auth/sign-in entry |
-| `Sidebar.jsx` | Yes | Add mobile category drawer variant |
-| `BracketCard.jsx` | Yes | Add live count, report/private states |
-| `HomeScreen.jsx` | Partial | Add onboarding modal, SSR loading/empty/error mapping |
-| `MatchupScreen.jsx` | Partial | Add local save states, accessibility focus, mobile layout; Streamer Live Mode 패널 추가 |
-| `ChatPanel.jsx` | Partial | Streamer Live Mode의 320px right rail로 사용. VoteTally (!A/!B 집계 바)와 ChatMessage 패턴 계승. Regular mode에서는 렌더링하지 않음. |
-| `ResultScreen.jsx` | Partial | Add comments, report, export states, SSR unavailable states |
-| `data.jsx` | Prototype only | Replace with loader/domain data |
+- Bracket title, incomplete count, auto-saved status, exit action
+- Smart paste input, batch image upload, editable entry queue
+- Bracket settings, entry preview, source editing, publish action
 
-### New Components Required
+**States**
 
-#### StreamerLiveModePanel (Matchup 내 패널)
+- Entry row: 정상 / 소스 없음 / 제목 없음 / 선택됨
+- Parse: pending / success / failed(manual fallback) / quota limited
+- Publish button: 미완료 시 "Finish N entries to publish"(비활성) / 준비 완료 "▶ Publish bracket"
+- Published: 완료 화면 + 공개 URL 복사 + "← Back to edit"
 
-**Purpose:** Twitch 채팅 연동 및 !A/!B 투표 집계.  
-**Anatomy:** 채널 연동 버튼, 연동 상태 chip, vote tally bar (A% vs B%), vote count.  
-**States:** not connected, connecting, connected, disconnected, no votes yet.  
-**Accessibility:** tally bar는 색상 외 퍼센트 수치로 보완; 연동 상태는 텍스트로 제공.
+**Notes**
 
-#### FullCommunityRankingView
-
-**Purpose:** 전체 N명 참가자의 커뮤니티 선택 % 랭킹. Result 페이지 Community Verdict에서 "View all N" 진입.  
-**Anatomy:** 순위별 참가자 리스트 (이미지, 이름, % 바, % 수치).  
-**States:** loading, 데이터 부족.  
-**Accessibility:** 순위는 텍스트로 제공; 퍼센트 바는 색상 외 수치로 보완.
-
-#### FullBracketModal
-
-**Purpose:** 전체 브라켓 트리 탐색. Result 페이지 Final Eight에서 "View all N" 진입, 풀스크린 모달.  
-**Anatomy:** zoom/drag 가능한 전체 브라켓 트리, 라운드 범위 필터 컨트롤, Save Image 버튼.  
-**States:** loading, zoom 인터랙션, save pending/complete/failed.  
-**Accessibility:** 모달 focus trap; Save Image pending 시 버튼 disabled + 설명 제공.
-
-#### CreateEntryPasteQueue
-
-**Purpose:** YouTube/image URL 기반 항목 입력을 빠르게 처리한다.  
-**States:** parsing, parsed, parse failed, invalid URL, quota limited, upload failed.  
-**Accessibility:** each row has editable label fields and explicit error text.
-
-#### TournamentSizePreview
-
-**Purpose:** 항목 수, 토너먼트 크기, bye 배정을 설명한다.  
-**States:** insufficient entries, valid, non-power-of-two with byes, too many entries.  
-**Accessibility:** summary text explains byes without relying on diagram only.
-
-### Component Implementation Roadmap
-
-**Phase 1 - Core Loop**
-
-- TopNav, Sidebar, BracketCard extensions
-- MatchupScreen accessibility/mobile extensions
-- ResultScreen: Comments/Share/Report 추출 (theme-streamer.jsx 기반) + missing states 추가
-- FullCommunityRankingView
-- FullBracketModal
-
-**Phase 2 - Broadcast Loop**
-
-- StreamerLiveModePanel (Matchup 내 패널 — Twitch 채팅 연동)
-
-**Phase 3 - UGC**
-
-- CreateEntryPasteQueue
-- TournamentSizePreview
-
----
-
-## UX Patterns
-
-### Navigation
-
-- Public discovery uses top nav + category sidebar on desktop.
-- Mobile discovery uses top nav + horizontal category rail or drawer.
-- Matchup/play removes non-essential navigation while preserving exit/report/restart controls.
-- Admin routes use dense table/detail split layout, not streamer-facing decorative cards.
-
-### Calls to Action
-
-- Home card primary: "Start tournament"
-- Home card secondary for streamers: "Start broadcast" (Streamer Control 진입)
-- Matchup primary: selecting A/B card
-- Result primary after own completion: "Download image" or "Copy result link"
-- Result primary when viewing someone else's result: "Play again"
-- Create primary: "Publish" after validation; "Save private" as secondary
-
-### Feedback
-
-- Copy actions change label briefly and announce to screen readers.
-- Long-running client tasks use button pending state, not full-page blocking.
-- Route-level loading uses skeletons.
-- Realtime degradation is a small persistent status, not a blocking modal.
-- Moderation actions show final state and side effects: public visibility, noindex, ads, comments.
-
-### Error Handling
-
-- Expected action errors are field-level where possible.
-- Provider/API failures offer manual fallback.
-- Public unavailable content uses generic language.
-- Admin errors include enough operational context without exposing secrets.
-- Retry is shown only when the user can reasonably recover.
+- Visual and component reference는 `docs/design/create-bracket/`에서 직접 확인한다.
+- Publish 전 별도 preview 스텝 없음. Composer 안에서 matchup preview를 제공한다.
+- Randomized seeding is the default; Preset seeding allows drag reorder.
 
 ---
 
@@ -569,7 +537,7 @@ flowchart TD
 ### Copy Guidelines
 
 - Use direct, second-person, functional copy.
-- Keep button labels action-based: "Copy OBS URL", "Open voting", "Download image".
+- Keep button labels action-based: "Go Live", "Open voting", "Download image".
 - Avoid cute error language. Use short recovery instructions.
 - Emoji stays out of buttons/body; section labels may use restrained emoji only where design system already allows it.
 
@@ -584,7 +552,7 @@ flowchart TD
 | 320-767 mobile | single-column, touch-first, bottom/compact actions, category rail/drawer |
 | 768-1023 tablet | two-column where useful, larger touch targets, condensed side panels |
 | 1024-1279 small desktop | desktop navigation without assuming 1280 fixed minimum |
-| 1280+ desktop | full Streamer Native layout: top nav, sidebar, right rail when appropriate |
+| 1280+ desktop | full desktop layout with persistent navigation and contextual side panels when appropriate |
 | 1920x1080 OBS | fixed 16:9 composition, no normal responsive chrome |
 
 ### Mobile
@@ -603,10 +571,10 @@ flowchart TD
 
 ### Desktop
 
-- Home uses existing 220px sidebar and 24-32px gutters.
-- Matchup uses optional 320px right rail for chat/vote context.
-- Result can use champion/share main column with comments/community stats side column.
-- Create flow benefits from left form/right live preview.
+- Home uses full browse navigation and category context.
+- Matchup can expose chat/vote context alongside the core A/B choice.
+- Result can place sharing, comments, and community stats near the champion result.
+- Create flow benefits from keeping entry editing and preview visible together.
 
 ### OBS screen capture
 
@@ -649,7 +617,6 @@ MVP target: practical WCAG 2.1 AA coverage for core flows, with automated axe cr
 - Normal text contrast target: at least 4.5:1.
 - Large display text target: at least 3:1.
 - Selection, live, winner, disabled, error states cannot rely on color alone.
-- Purple/green brand colors must be paired with text/icons/shape changes for state.
 
 ### Touch and Pointer
 
@@ -687,40 +654,39 @@ MVP target: practical WCAG 2.1 AA coverage for core flows, with automated axe cr
 
 ---
 
-## Acceptance Criteria for UX Implementation
+## UX Patterns
 
-### Core Journey
+### Navigation
 
-- A new visitor can select a category, start a bracket, complete a 16강 tournament, and reach a result without creating an account.
-- A returning visitor with incomplete local progress sees a clear resume/restart choice.
-- Result page supports copy link, image export, direct social share, Play again, comments, and report entry.
+- Public discovery uses top nav + category sidebar on desktop.
+- Mobile discovery uses top nav + horizontal category rail or drawer.
+- Matchup/play removes non-essential navigation while preserving exit/report/restart controls.
+- Admin routes use dense table/detail split layout, not streamer-facing decorative cards.
 
-### Streamer Journey
+### Calls to Action
 
-- A streamer can open a Bracket Pack, activate live mode, and connect their Twitch channel from the matchup screen.
-- Once connected, !A/!B chat votes are counted and displayed in real time on the matchup screen.
-- Streamer advances the bracket with A/D keys; the same screen is shared to viewers via OBS screen capture.
+- Home card primary: "Start tournament"
+- Home card secondary for streamers: "Start broadcast" (Matchup Live Mode 진입)
+- Matchup primary: selecting A/B card
+- Result primary after own completion: "Download image" or "Copy result link"
+- Result primary when viewing someone else's result: "Play again"
+- Create primary: "Publish" after validation; "Save private" as secondary
 
-### UGC Journey
+### Feedback
 
-- Creator login is requested only when entering create/publish flow.
-- YouTube URL parse failure has manual fallback.
-- Image URL/upload failure explains recovery.
-- Non-power-of-two entry count shows bye preview, not a blocking error.
-- Publish completion returns the public bracket URL.
+- Copy actions change label briefly and announce to screen readers.
+- Long-running client tasks use button pending state, not full-page blocking.
+- Route-level loading uses skeletons.
+- Realtime degradation is a small persistent status, not a blocking modal.
+- Moderation actions show final state and side effects: public visibility, noindex, ads, comments.
 
-### Safety Journey
+### Error Handling
 
-- Any public bracket/result/comment has a report path.
-- Admin can see report queue, target preview, status, and action history.
-- Hide/takedown/ad restriction actions communicate public visibility, noindex/cache, and ad effects.
-
-### Accessibility
-
-- Core play flow works with keyboard only.
-- Focus is visible across dark UI.
-- Automated axe critical/serious issues are 0 on core routes.
-- Screen reader users can understand current round, contestants, selected action, result, and modal errors.
+- Expected action errors are field-level where possible.
+- Provider/API failures offer manual fallback.
+- Public unavailable content uses generic language.
+- Admin errors include enough operational context without exposing secrets.
+- Retry is shown only when the user can reasonably recover.
 
 ---
 
@@ -735,25 +701,13 @@ MVP target: practical WCAG 2.1 AA coverage for core flows, with automated axe cr
 
 ---
 
-## Design System Usage Rules
-
-- Use `docs/design/colors_and_type.css` as the token source.
-- Do not hardcode brand colors in implementation.
-- Preserve Streamer Native voice: direct, competitive, functional.
-- Use Inter for primary UI and JetBrains Mono for counters, labels, shortcuts, and stats.
-- Keep cards on `--bg-card` with `--border-ring`; avoid shadow-based elevation.
-- Use purple for primary/action/active and green for live/winner/positive state.
-- Replace prototype Unicode/emoji icons with a real icon library before production if implementation scope allows, but do not change the visual tone.
-
----
-
 ## Handoff Summary
 
 This UX specification keeps the chosen Streamer Native direction and fills the missing product UX around:
 
 - detailed PRD journey flows
 - additional MVP screens beyond Home, Matchup, Result
-- OBS screen capture live mode and streamer control
+- OBS screen capture live mode
 - live chat voting
 - result sharing
 - comments
@@ -761,6 +715,5 @@ This UX specification keeps the chosen Streamer Native direction and fills the m
 - responsive and OBS viewport strategy
 - keyboard, focus, contrast, screen reader, and axe criteria
 - loading, empty, error, and failure states
-- component coverage from existing UI kit vs required new components
 
-Implementation should start by extending the existing Home, Matchup, and Result UI kit patterns, then add broadcast/session, voting, creation, comments, and moderation components in the roadmap order above.
+Implementation should start by reading this UX specification for required journeys, states, and acceptance criteria, then inspect `docs/design` directly for the visual and component-level implementation reference. Do not reimplement visual details from this document when a corresponding `docs/design` artifact exists.
