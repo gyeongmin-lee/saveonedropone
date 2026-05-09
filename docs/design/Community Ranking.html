@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Full Community Ranking — states</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  html, body { margin: 0; padding: 0; background: #f0eee9; font-family: 'Inter', system-ui, sans-serif; }
+  * { box-sizing: border-box; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="create-bracket/design-canvas.jsx"></script>
+<script type="text/babel" src="community-ranking/states.jsx"></script>
+
+<script type="text/babel" data-presets="env,react">
+  const { DesignCanvas, DCSection, DCArtboard, DCPostIt } = window;
+
+  function App() {
+    return (
+      <DesignCanvas>
+        <DCSection
+          id="brief"
+          title="Full Community Ranking — fullscreen modal"
+          subtitle="Opens from the result page Community Verdict 'View all 64 →'. Same dark surface language as the result page; covers nav. Header carries the bracket title + live stats; sortable list ranks every entrant by % of community who picked them as champion. Viewer's own picks are tinted and tagged inline."
+        >
+          <DCPostIt top={64} right={40} rotate={-2} width={300}>
+            Columns kept tight per the brief: rank, name + portrait, % picked. The bar visualizes the same %, the trailing label is just a clarifier. Tabs (All / Mine / By group / Upsets) are nav-only stubs.
+          </DCPostIt>
+        </DCSection>
+
+        <DCSection
+          id="loading"
+          title="Loading"
+          subtitle="Header + filter bar render immediately so the modal feels anchored. Skeleton rows fill the body; mono spinner copy makes the wait feel intentional ('Tallying votes from 482K players…')."
+        >
+          <DCArtboard id="loading" label="Loading · skeleton rows + tally copy" width={1280} height={800}>
+            <CRLoading />
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection
+          id="populated"
+          title="Full ranked list"
+          subtitle="Default sort: % picked as champion, descending. Row #1 gets the brand purple→green gradient bar plus a 'Community #1' chip. Viewer's champion + runner-up rows pick up a 10% purple tint and a 'Your champion' / 'Your runner-up' tag — strong enough to find at a glance, quiet enough not to fight the ranking."
+        >
+          <DCArtboard id="populated" label="Populated · 22 of 64 visible, viewer's picks tagged" width={1280} height={800}>
+            <CRPopulated />
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection
+          id="insufficient"
+          title="Insufficient community data"
+          subtitle="Hit when fewer than 100 players have completed this bracket. We don't show a ranked list at all — it would be misleading. Instead: explain the threshold, show progress toward it, and offer share / notify-me CTAs. A small confidence-flagged 'early signal' callout still surfaces the viewer's pick so the trip wasn't wasted."
+        >
+          <DCArtboard id="insufficient" label="Insufficient · 14 / 100 plays" width={1280} height={800}>
+            <CRInsufficient />
+          </DCArtboard>
+        </DCSection>
+      </DesignCanvas>
+    );
+  }
+
+  ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

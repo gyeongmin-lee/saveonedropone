@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Full Bracket Modal — states</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  html, body { margin: 0; padding: 0; background: #f0eee9; font-family: 'Inter', system-ui, sans-serif; }
+  * { box-sizing: border-box; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+<script type="text/babel" src="create-bracket/design-canvas.jsx"></script>
+<script type="text/babel" src="full-bracket/states.jsx"></script>
+
+<script type="text/babel" data-presets="env,react">
+  const { DesignCanvas, DCSection, DCArtboard, DCPostIt } = window;
+
+  function App() {
+    return (
+      <DesignCanvas>
+        <DCSection
+          id="brief"
+          title="Full Bracket Modal — fullscreen"
+          subtitle="Opens from the result page Final Eight 'View all 128 →'. Covers the app nav. 128 entrants, 7 rounds, centered/mirrored: Final at the middle column with the championship card; R128 → R64 → R32 → R16 → Q → S fan outward symmetrically. Round chips top-center, zoom dock bottom-right; pan + zoom interactions take over the canvas."
+        >
+          <DCPostIt top={64} right={40} rotate={-2} width={300}>
+            Save Image captures the currently-framed round range. Crop preview shows up while saving so the user knows what they'll get. PNG is 1080×1350 portrait, sized for IG / vertical share.
+          </DCPostIt>
+        </DCSection>
+
+        <DCSection
+          id="loading"
+          title="Loading"
+          subtitle="Modal chrome (header, round chips, zoom dock) renders immediately so the surface is interactive before the bracket itself paints. Faint scaffolding lines tease the structure; copy makes the wait specific ('3 of 7 rounds')."
+        >
+          <DCArtboard id="loading" label="Loading · scaffold + tally" width={1440} height={900}>
+            <FBLoading />
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection
+          id="browse"
+          title="Browse · zoom + drag"
+          subtitle="Default opens fit-to-screen so the whole 7-round shape reads at once — at this density names are deliberately abstracted to hue stripes; the goal is showing the full shape of the tournament. The viewer's path through the bracket gets a subtle purple highlight. Drag pans; scroll/pinch zooms; the chrome gets a low-opacity glass treatment to not fight the content."
+        >
+          <DCArtboard id="default" label="Default · fit-to-screen, viewer's path lit" width={1440} height={900}>
+            <FBDefault />
+          </DCArtboard>
+          <DCArtboard id="zoomed" label="Zoomed 140% · drag in use" width={1440} height={900}>
+            <FBZoomedDrag />
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection
+          id="focus"
+          title="Round range focus"
+          subtitle="Tapping a round chip pulls focus to that round (and everything downstream of it) — non-focused rounds dim to 25% so the eye doesn't have to fight to track a single round across the canvas. Chip stays sticky until cleared."
+        >
+          <DCArtboard id="focus" label="Quarterfinals locked · others dimmed" width={1440} height={900}>
+            <FBRoundFocus />
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection
+          id="save"
+          title="Save image"
+          subtitle="Save captures the rectangle the user is currently framing — explicit crop overlay confirms what's about to be exported. Success / failure handled via toast at the bottom; failure carries an inline retry."
+        >
+          <DCArtboard id="save-pending" label="Pending · crop overlay + spinner toast" width={1440} height={900}>
+            <FBSavePending />
+          </DCArtboard>
+          <DCArtboard id="save-success" label="Success · file name + size" width={1440} height={900}>
+            <FBSaveSuccess />
+          </DCArtboard>
+          <DCArtboard id="save-failure" label="Failure · 'Try again' inline" width={1440} height={900}>
+            <FBSaveFailure />
+          </DCArtboard>
+        </DCSection>
+
+        <DCSection
+          id="offline"
+          title="Connection lost"
+          subtitle="Persistent amber banner pinned to the top of the modal — the bracket beneath fades to ~55% so it's clearly stale-but-readable. Live tally is paused. We never replace the bracket itself; the last good snapshot is more useful than an error state."
+        >
+          <DCArtboard id="offline" label="Offline · last snapshot, faded" width={1440} height={900}>
+            <FBOffline />
+          </DCArtboard>
+        </DCSection>
+      </DesignCanvas>
+    );
+  }
+
+  ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

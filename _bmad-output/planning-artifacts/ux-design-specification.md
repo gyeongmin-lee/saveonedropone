@@ -186,12 +186,12 @@ loading, empty, error, offline, removed, private, rate-limited 상태는 사용�
 | 화면 | 경로/표면 | 주 사용자 | 렌더링 | 목적 |
 |---|---|---|---|---|
 | Home / Browse | `/`, `/brackets`, `/categories/:categorySlug` | 시청자, 스트리머 | SSR | featured/trending/category 기반 브라켓 발견 |
-| First-visit onboarding modal | Home 진입 시 조건부 | 시청자 | Client overlay | 관심 카테고리 선택 후 즉시 브라켓 추천 |
 | Matchup play | `/play/:bracketSlug` | 시청자, 스트리머 | CSR 중심 | 1v1 선택, undo/restart, 로컬 저장, 채팅 투표 집계 표시 |
 | Streamer live mode | Matchup play 내 opt-in 패널 | 스트리머 | CSR | Twitch 채팅 연동 활성화, !A/!B 투표 집계 |
 | Result page | `/results/:resultId` | 시청자, 스트리머 | SSR | 챔피언, 경로, 통계, 공유, 댓글 |
-| Full Community Ranking View | Result 내 modal | 시청자 | Client overlay | 전체 N명 커뮤니티 선택 % 바 차트 랭킹 |
-| Full Bracket Modal | Result 내 modal | 시청자 | Client overlay | 전체 브라켓 트리 zoom/drag, 라운드 범위 필터, Save Image |
+| Full Community Ranking View | Result 내 modal | 시청자 | Client overlay | 전체 N명 커뮤니티 선택 % 랭킹. 검색, All entrants 탭(MVP). My picks·By group·Biggest upsets(Growth). 무한 스크롤. Insufficient 상태 포함. |
+| Full Bracket Modal | Result 내 modal | 시청자 | Client overlay | 전체 브라켓 트리 zoom/drag, 라운드 칩 필터(All·R128…F), 줌 슬라이더+FIT, 뷰어 경로 하이라이트, Save Image(점선 오버레이 포함). Offline(Growth). |
+| First-visit onboarding modal | Home 진입 시 조건부 | 시청자 | Client overlay | 관심사 카테고리 선택(10개) → 홈 피드 "For you" 레일 in-place 추가. Dismissed 시 사이드바 Personalize로 재진입. |
 | Create bracket flow | `/create`, `/create/new` | UGC 제작자 | SSR + CSR form | 단일 페이지 Composer — 스마트 붙여넣기, 항목 큐, 브라켓 설정, 공개 URL 생성 |
 | Auth callback / sign-in sheet | `/auth/callback`, modal | 제작자 | SSR/action | Google/Twitch 로그인 |
 
@@ -465,6 +465,37 @@ flowchart TD
 - Visual and component reference는 `docs/design`에서 직접 확인한다.
 - SSR metadata가 핵심이므로 결과 title, description, canonical, og tags가 초기 HTML에 있어야 한다.
 
+### Onboarding Modal
+
+**Purpose:** 첫 방문자가 관심사 카테고리를 선택해 홈 피드를 즉시 개인화한다. 강제 게이팅 없이 항상 Skip 가능.
+
+**States**
+
+- **fresh**: 모달 오픈, 아무것도 선택되지 않음. 홈 피드가 배경에 dimmed.
+- **selecting**: 1개 이상 선택됨. "Save & explore →" CTA 활성화. 선택 수·핀될 브라켓 수 표시.
+- **reshuffle**: "Save & explore →" 클릭 후 모달 닫히는 중. 홈 피드 dim 해제, 상단에 "For you" 레일 in-place 추가.
+- **dismissed**: Skip 클릭. 모달 닫힘, 기본 피드 표시. 사이드바에 "Personalize" 항목 노출로 재진입 가능.
+
+**Interaction rules**
+
+- 1개 이상 카테고리 선택 시 CTA 활성화 ("Save & explore →"). 미선택 시 비활성.
+- "Skip for now"는 항상 클릭 가능.
+- dismissed 후 재진입: 사이드바 "Personalize" 항목 클릭 → 모달 재오픈. Floating pill 없음.
+- 카테고리: K-pop / Anime & manga / Gaming / Movies & TV / Sports / Music / Internet & memes / Food / Tech / Books (10개).
+
+**Post-selection home feed**
+
+- 상단 "For you" 레일: 선택 카테고리 기반 브라켓 핀. "N INTERESTS" 뱃지, "Edit interests" 링크 포함.
+- "Trending today" 등 기존 섹션은 "For you" 레일 아래 유지.
+- Reshuffle toast: "N brackets pinned to your home" (토스트 카피·시각 처리는 `docs/design/onboarding/states.jsx` 참조).
+
+**Notes**
+
+- 시각·컴포넌트 레퍼런스는 `docs/design/onboarding/states.jsx` 참조.
+- 온보딩은 첫 방문에만 자동 노출. 이후는 사이드바 Personalize 항목으로만 재진입.
+
+---
+
 ### Full Community Ranking View
 
 **Purpose:** 전체 참가자를 커뮤니티 선택 비율 순으로 보여준다. Result 페이지 Community Verdict 패널의 "View all N" 버튼으로 진입한다.
@@ -473,12 +504,34 @@ flowchart TD
 
 - 전체 N명 참가자를 커뮤니티 선택 % 기준으로 내림차순 정렬한 리스트
 - 각 항목: 순위, 참가자 이미지/이름, 퍼센트 바, 퍼센트 수치
-- 현재 사용자가 선택한 참가자와 커뮤니티 1위 간의 시각적 구분
+- 현재 사용자가 선택한 챔피언·준우승 참가자에 "YOUR CHAMPION" / "YOUR RUNNER-UP" 뱃지 + 행 tint
+- 커뮤니티 1위에 "★ COMMUNITY #1" 뱃지
+
+**Filter tabs**
+
+- **MVP**: `All entrants` 단일 탭
+- **Growth**: `My picks` / `By group` / `Biggest upsets` 탭 추가
+
+**Search & sort**
+
+- 이름·그룹 검색 바 (MVP 포함)
+- 정렬: "% picked as champion ↓" 기본 (MVP). 추가 정렬 옵션은 Growth.
+
+**Pagination**
+
+- 무한 스크롤 ("N more · scroll to load") — MVP 포함
 
 **States**
 
-- Loading
-- 커뮤니티 데이터 부족 (플레이 수 미달)
+- Loading: 스켈레톤 행 표시
+- Populated: 전체 랭킹 + 본인 픽 하이라이트
+- Insufficient: 플레이 수 미달 시 — 현재 플레이 수·필요 수·현재 라이브 수 표시, "Share this bracket" CTA 하나만 제공. "Notify me when ready"는 Growth. 조기 신호("Early signal: N picks so far") 텍스트 포함.
+
+**Notes**
+
+- 시각·컴포넌트 레퍼런스는 `docs/design/community-ranking/states.jsx` 참조.
+- "Notify me when ready"는 Growth 범위. MVP insufficient 상태에서는 "Share this bracket" CTA만 노출.
+- "YOUR CHAMPION / YOUR RUNNER-UP" 표시는 결과 페이지의 뷰어 선택 데이터를 기반으로 하며, 해당 데이터가 없으면(다른 사람 결과 조회 시) 뱃지를 렌더링하지 않음.
 
 ### Full Bracket Modal
 
@@ -486,15 +539,28 @@ flowchart TD
 
 **Primary content**
 
-- 전체 토너먼트 브라켓 트리, zoom/drag 가능
-- 라운드 범위 필터 컨트롤 (예: 전체 128 / 상위 64 / 상위 32): 특정 라운드 구간만 집중해서 볼 수 있음
+- 전체 토너먼트 브라켓 트리, zoom/drag 가능 (핀치/스크롤 줌, 드래그 패닝)
+- 줌 컨트롤: −/슬라이더/+ + 퍼센트 표시 + `FIT` 버튼 (fit-to-screen 리셋). 우측 하단 고정.
+- 라운드 칩 필터: `All rounds` + `R128 / R64 / R32 / R16 / Q / S / F` 개별 선택. 칩 선택 시 해당 라운드 포커스, 나머지 dim
 - Save Image 버튼 (pending/complete/failure 상태 포함)
 
 **States**
 
-- Loading
-- Zoom in/out 인터랙션
-- Save Image: pending, complete, failed
+- **Loading**: 진행 표시 ("Drawing N entrants… X of 7 rounds"), 스캐폴드 시각 포함
+- **Default**: fit-to-screen, 전체 라운드 가시, 뷰어 경로 하이라이트
+- **Zoomed**: 드래그 패닝 가능, 드래그 힌트 표시, FIT 버튼으로 초기 배율 복귀
+- **Round focus**: 라운드 칩 선택 시 해당 라운드 외 dim 처리
+- **Save Image — pending**: 캡처 범위 점선 오버레이 + 토스트
+- **Save Image — success**: 파일명·해상도 토스트
+- **Save Image — failure**: 오류 토스트 + "Try again" 액션
+- **Offline** *(Growth)*: 앰버 배너 "Connection lost · snapshot N min ago", Reconnect 버튼. 브라켓은 마지막 스냅샷으로 읽기 가능하게 유지. MVP에서는 offline 시 모달 자체를 닫음.
+
+**Notes**
+
+- 시각·컴포넌트 레퍼런스는 `docs/design/full-bracket/states.jsx` 참조.
+- 뷰어 경로 하이라이트(보라 tint)는 현재 결과 페이지에서 전달된 뷰어 선택 데이터를 기반으로 함. 타인 결과 조회 시 하이라이트 없음.
+- 브라켓 레이아웃은 좌우 미러 구조 (중앙 Final, 외곽 R128 방향). 세부 구조는 `docs/design/full-bracket/states.jsx` 참조.
+- Save Image 캡처 범위는 사용자가 선택한 라운드 필터 범위를 기준으로 함 (기본: Q–F, PNG 1080×1350).
 
 ### Create Bracket Flow
 

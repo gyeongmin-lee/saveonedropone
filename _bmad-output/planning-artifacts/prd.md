@@ -119,7 +119,8 @@ Save One Drop One은 한국의 이상형 월드컵 포맷을 서구권 스트리
 ### MVP — Minimum Viable Product
 
 - 방송-ready Bracket Pack 100개 이상 (K-팝·애니 우선, 게임·스포츠 확장 검증): 제목, 썸네일, 참가 항목, OBS 레이아웃, 공유 링크 포함
-- 첫 방문자 관심사 온보딩 팝업: 카테고리 선택(Music / Anime / Sports / Gaming 등) → 즉시 해당 브라켓 화면 진입 (계정 불필요)
+- 첫 방문자 관심사 온보딩 팝업: 카테고리 선택 → 모달 종료 후 홈 피드 상단에 "For you" 레일 in-place 추가 (별도 페이지 이동 없음, 계정 불필요)
+- 온보딩 카테고리 10개: K-pop / Anime & manga / Gaming / Movies & TV / Sports / Music / Internet & memes / Food / Tech / Books
 - 카테고리 내 세부 태그 탐색: 예) 카테고리 `게임` → 태그 `브롤스타즈`, `리그 오브 레전드`, `마인크래프트`
 - 1v1 토너먼트 플레이 UI (방송 최적화, 모바일 대응)
 - 비정규 참가자 수 지원 및 부전승 시스템: 참가자가 정확히 16/32/64/128명이 아니어도 브라켓 생성 가능
@@ -180,7 +181,7 @@ Save One Drop One은 한국의 이상형 월드컵 포맷을 서구권 스트리
 
 *Opening Scene:* Jin은 Maya의 방송 VOD를 다음 날 보다가 "이거 나도 해보고 싶다"는 생각이 든다. 채팅에서 스트리머가 공유한 링크를 찾아 클릭한다.
 
-*Rising Action:* 처음 사이트에 들어오자 팝업이 뜬다. "어떤 걸 좋아하세요?" — K-pop을 선택하자 바로 브라켓 목록이 나온다. "4세대 걸그룹 멤버 64강"을 클릭해 플레이 시작. 계정 없이 바로 된다.
+*Rising Action:* 처음 사이트에 들어오자 팝업이 뜬다. "What's your scene?" — K-pop을 선택하고 "Save & explore →"를 누르자 모달이 닫히며 홈 피드 상단에 "For you" 레일이 나타난다. K-pop 브라켓이 핀되어 있다. "4세대 걸그룹 멤버 64강"을 클릭해 플레이 시작. 계정 없이 바로 된다.
 
 *Climax:* 64강을 완주한다. 최종 1위가 나오는 순간 — Maya와 다른 결과다. 결과 이미지를 저장해 디코 친구들한테 올린다.
 
@@ -422,7 +423,7 @@ Save One Drop One은 React Router 7 framework mode 기반의 SSR/SSG 하이브�
 
 **Must-Have 기능:**
 - 큐레이션 Bracket Pack 100개 이상 (K-팝·애니 우선)
-- 첫 방문자 관심사 온보딩 팝업 (카테고리 선택 → 즉시 브라켓 진입)
+- 첫 방문자 관심사 온보딩 팝업 (카테고리 선택 → 홈 피드 "For you" 레일 in-place 추가)
 - 1v1 토너먼트 플레이 UI (방송 최적화, 모바일 대응)
 - 진행 상황 로컬 저장 및 미완료 브라켓 이어하기
 - OBS 브라우저 소스 호환 방송 레이아웃 (1920×1080)
@@ -550,7 +551,7 @@ Save One Drop One은 React Router 7 framework mode 기반의 SSR/SSG 하이브�
 | FR34 | 방문자는 결과 공유 링크를 클릭하면 해당 브라켓의 결과 화면으로 직접 이동할 수 있다 | MVP |
 | FR35 | 방문자는 결과 화면에서 "Play again" 버튼으로 자신의 플레이를 시작할 수 있다 | MVP |
 | FR35a | 방문자는 Community Verdict 패널에서 "View all N"을 눌러 전체 참가자의 커뮤니티 선택 % 랭킹을 볼 수 있다 | MVP |
-| FR35b | 방문자는 Final Eight 패널에서 "View all N"을 눌러 전체 브라켓 트리를 풀스크린 모달로 볼 수 있다. 모달에는 zoom/drag, 라운드 범위 필터(전체/상위 N), Save Image 기능이 포함된다 | MVP |
+| FR35b | 방문자는 Final Eight 패널에서 "View all N"을 눌러 전체 브라켓 트리를 풀스크린 모달로 볼 수 있다. 모달에는 zoom/drag(슬라이더+FIT), 라운드 칩 필터(All·R128·R64·R32·R16·Q·S·F), 뷰어 경로 하이라이트, Save Image(캡처 범위 오버레이·pending/success/failure) 기능이 포함된다 | MVP |
 
 ### 5. 소셜 참여 및 커뮤니티
 
