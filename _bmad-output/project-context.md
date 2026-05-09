@@ -18,7 +18,8 @@ _AI 에이전트가 이 프로젝트의 코드를 구현할 때 반드시 따라
 | 프레임워크 | **React Router 7 (framework mode)** |
 | UI | React + CSS Custom Properties |
 | 스타일 토큰 | `docs/design/colors_and_type.css` |
-| 아직 미결정 | DB, 백엔드 런타임, 배포 플랫폼 |
+| DB / Auth / Storage / Realtime | **Supabase** (Postgres, Auth, Storage, Realtime Broadcast) |
+| 백엔드 런타임 / 배포 | **Cloudflare Workers** |
 
 **절대 사용 금지:** Next.js. 제안하지도 말 것.
 
@@ -127,7 +128,40 @@ color: #7c3aed;
 - 스트리머는 단일 URL을 OBS에 추가하는 것으로 방송 통합 완료 (FR40)
 - OBS 방송 모드: 16:9 레이아웃 최적화, 키보드(A/D)로 로컬 조작 → 방송에 실시간 반영 (FR41)
 - OBS 모드와 일반 플레이 모드는 **동일한 URL, 다른 레이아웃** — `?obs=1` 쿼리 파라미터 또는 별도 경로로 구분
-- OBS 브라우저 소스는 WebSocket 연결 지원. 실시간 동기화가 필요하면 이를 활용할 것
+- OBS 브라우저 소스는 Supabase Realtime Broadcast 채널(`live-session:{session_id}`)을 구독해 투표 집계를 실시간으로 표시한다
+
+---
+
+## 라이브 투표 & 채팅 연동
+
+**시청자 참여 방식은 Twitch 채팅 명령어(!A/!B) 하나뿐이다. 웹 투표 링크는 존재하지 않는다.**
+
+### 데이터 흐름
+
+```
+Twitch 채팅 → EventSub Webhook (POST /api/twitch/eventsub)
+  → HMAC 서명 검증
+  → !A / !B 파싱
+  → live_votes upsert (session_id, user_id, match_id) — 중복 투표 자동 덮어쓰기
+  → 집계 COUNT 조회
+  → Supabase Broadcast { type: 'vote_update', match_id, vote_a, vote_b }
+  → OBS 화면 + 스트리머 컨트롤러 실시간 반영
+```
+
+### 구현 규칙
+
+- EventSub 수집: `channel.chat.message` only. IRC justinfan 사용 금지.
+- `live_votes` 테이블: unique `(session_id, user_id, match_id)` — last-vote-wins upsert.
+- Broadcast 페이로드에 원시 채팅 메시지를 포함하지 말 것. 집계값만 전달.
+- Postgres Changes를 투표 이벤트 fan-out에 사용하지 말 것.
+- YouTube 채팅은 Growth. MVP에서 구현하지 말 것.
+
+### 스트리머 OAuth (채팅 연동용, 소셜 로그인과 별개)
+
+- Supabase Auth Twitch 로그인 = 사용자 신원 확인용 (scope: 기본)
+- 채팅 수집 활성화 = 별도 OAuth 동의 필요: 스트리머가 `channel:bot` scope를 앱에 부여
+- 앱 봇 계정은 `user:bot` + `user:read:chat` 토큰을 서버에서만 보관 (브라우저에 노출 금지)
+- 스트리머가 이 동의를 완료하기 전까지 채팅 투표는 비활성 상태
 
 ---
 

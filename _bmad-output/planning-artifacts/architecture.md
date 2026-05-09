@@ -5,6 +5,7 @@ inputDocuments:
   - "_bmad-output/planning-artifacts/product-brief-saveonedropone.md"
   - "_bmad-output/planning-artifacts/product-brief-saveonedropone-distillate.md"
   - "_bmad-output/planning-artifacts/research/domain-saveonedropone-merged-streamer-bracket-research-2026-05-06.md"
+  - "_bmad-output/planning-artifacts/research/technical-gartic-on-stream-chat-integration-saveonedropone-research-2026-05-09.md"
   - "_bmad-output/planning-artifacts/prd-validation-report.md"
   - "_bmad-output/project-context.md"
   - "docs/design/README.md"
@@ -34,6 +35,10 @@ Implementation agents MUST read this brief before using the rest of this archite
 - Use Supabase for Postgres, Auth, Storage, and Realtime.
 - Treat React Router loaders/actions/resource routes as the BFF boundary.
 - Treat Supabase Realtime as transient coordination only; durable broadcast/session recovery must use persisted checkpoints.
+- Twitch chat (`!A/!B`) is the sole viewer participation mechanism. Do not implement a web vote link.
+- Use Twitch EventSub `channel.chat.message` for chat collection. Do not use IRC justinfan.
+- Vote state: upsert each vote to Supabase Postgres (`live_votes` table, idempotent on `(session_id, user_id, match_id)`), then broadcast aggregated counts via Supabase Realtime Broadcast. Do not stream raw chat events to Postgres Changes.
+- YouTube chat integration is Growth. Do not implement it in MVP.
 - Keep anonymous in-progress play local-first with versioned localStorage state.
 - Public bracket/result/category pages must render SEO metadata and OG metadata server-side.
 - Public visibility must be decided before metadata, cache headers, ad eligibility, and rendering.
@@ -43,7 +48,7 @@ Implementation agents MUST read this brief before using the rest of this archite
 
 - `domain/`: pure TypeScript rules. No React, Supabase, request/response, localStorage, or browser APIs.
 - `repositories/`: database row mapping and persistence access. Return domain-shaped camelCase objects.
-- `services/`: auth, storage, rate limiting, YouTube metadata, realtime setup, analytics, and other external boundaries.
+- `services/`: auth, storage, rate limiting, YouTube metadata, realtime setup, analytics, Twitch EventSub chat collection, live vote aggregation, and other external boundaries.
 - `routes/`: request parsing, auth checks, validation, repository/service orchestration, metadata, headers, and route composition.
 - `features/`: product-specific UI flows, hooks, and client interaction wiring.
 - `components/`: reusable app-wide presentational UI only.
@@ -91,12 +96,12 @@ Save One Drop One은 스트리머-퍼스트 1v1 브라켓 토너먼트 웹 앱�
 - 공개 브라켓 탐색 및 SEO 랜딩 페이지
 - 인증된 사용자의 Bracket Pack 생성 및 YouTube/image URL 기반 항목 입력
 - 1v1 토너먼트 진행 엔진, 부전승 처리, undo/restart, 로컬 진행 상태 저장
-- OBS 브라우저 소스용 16:9 방송 레이아웃과 로컬 키보드 조작 반영
+- Streamer Live Mode 매치업 레이아웃 (OBS screen capture 최적화, 별도 OBS 라우트 없음) 및 로컬 키보드 조작
 - 결과 페이지, 결과 이미지 생성, OG 메타데이터 기반 공유 링크
 - 공개 결과 댓글, 신고, 관리자 takedown, DMCA 처리 경로
 - 익명 플레이와 소셜 로그인 기반 생성 권한 분리
-- 방송 중 시청자 참여 링크 기반 실시간 투표
-- Growth 이후 결과 비교, Twitch/YouTube 채팅 명령, 즐겨찾기, 애널리틱스, 프리미엄 기능 확장
+- 방송 중 Twitch 채팅 !A/!B 명령어 기반 실시간 투표 (채팅이 유일한 참여 방식; 웹 투표 링크 없음)
+- Growth 이후 결과 비교, YouTube 채팅 연동, 즐겨찾기, 애널리틱스, 프리미엄 기능 확장
 
 MVP는 단순 게임 UI가 아니라 `Bracket Pack`이라는 콘텐츠 단위를 중심으로 한다. 제목, 카테고리, 썸네일, 참가 항목, 예상 진행 시간, OBS 레이아웃, 공개 페이지, 결과 페이지, 공유 메타데이터가 하나의 도메인 객체처럼 일관되게 다뤄져야 한다.
 
@@ -155,7 +160,7 @@ MVP는 단순 게임 UI가 아니라 `Bracket Pack`이라는 콘텐츠 단위를
 - Cache strategy for viral public pages and OG assets
 - Domain consistency for bracket seeding, byes, match history, undo, restart, and result reconstruction
 - Anonymous session persistence without requiring account creation
-- Real-time state propagation between streamer controller, OBS view, and viewer voting link
+- Real-time state propagation between Twitch EventSub webhook and streamer matchup page (vote aggregation broadcast and chat feed)
 - Media ingestion safety, storage, proxying, and fallback behavior
 - Moderation states affecting public visibility, noindex behavior, ad eligibility, and takedown logs
 - Auth boundary between anonymous play and creator/admin capabilities
@@ -318,7 +323,7 @@ If initializing inside the existing repository rather than creating a nested pro
 - Data platform: Supabase managed Postgres
 - Authentication: Supabase Auth with Google and Twitch OAuth
 - Media storage: Supabase Storage for uploaded/proxied images
-- Realtime: Supabase Realtime Broadcast for MVP live voting and OBS/session sync
+- Realtime: Supabase Realtime Broadcast for OBS view and streamer controller sync; Supabase Postgres for vote state persistence (upsert + aggregation)
 - Hosting: Cloudflare Workers for React Router SSR/BFF deployment
 - API pattern: React Router loaders/actions/resource routes as the BFF layer
 - Validation: shared server-side schemas for actions, loaders, and domain inputs
@@ -330,9 +335,12 @@ If initializing inside the existing repository rather than creating a nested pro
 - Anonymous play state is local-first, with server result persistence only at completion/share.
 - Admin/moderation operations are server-only and never expose service credentials to the browser.
 - Cloudflare Worker runtime compatibility is a hard constraint for server-side app code.
+- Twitch chat integration requires a dedicated streamer OAuth consent flow: streamer must grant `channel:bot` scope; app bot account holds `user:bot` + `user:read:chat` tokens. These are separate from the user-facing Twitch social login.
+- Live vote counting uses DB-level upsert on `(session_id, user_id, match_id)` for idempotent last-vote-wins semantics. Multiple Worker instances may receive EventSub webhooks concurrently; DB upsert is the coordination point.
+- Supabase Realtime Broadcast carries aggregated vote state (`{ match_id, vote_a, vote_b }`) and ephemeral raw chat messages (`{ userId, displayName, message, sentAt }`) for the ChatPanel feed. Raw chat messages are not persisted to any table.
 
 **Deferred Decisions (Post-MVP):**
-- Twitch/YouTube chat command integration
+- YouTube chat command integration (after Twitch stabilization; requires gRPC streamList Workers compatibility verification)
 - Result comparison screen
 - Creator analytics dashboard
 - Billing/subscriptions
@@ -354,6 +362,8 @@ Data modeling approach:
 - `play_results` stores completed public/shareable results, not every anonymous in-progress local state.
 - `comments`, `reports`, `moderation_actions`, and `dmca_requests` are first-class tables.
 - `analytics_events` records product loop metrics: streamer repeat use, derived viewer sessions, result shares, and share-link returns.
+- `live_sessions` stores active broadcast session metadata: streamer user, bracket pack, current match, Twitch channel ID, connection status, and EventSub subscription ID.
+- `live_votes` stores per-match vote state: `(session_id, user_id, match_id)` unique, `vote_value` ('A'|'B'), `voted_at`. Scoped to the session lifetime; may be cleared after session ends.
 
 Migration approach:
 - Use SQL migrations through Supabase CLI.
@@ -376,10 +386,16 @@ Authorization:
 - Supabase RLS protects user-owned data where client-side Supabase access is used.
 - Service-role access is server-only and limited to route actions/loaders or server modules.
 
+Twitch chat integration OAuth (separate from social login):
+- Streamer social login (Supabase Auth Twitch OAuth) grants user identity only.
+- Chat collection requires a second, distinct OAuth consent: streamer grants `channel:bot` scope to the Save One Drop One app. This is the channel connection onboarding step.
+- App bot account holds `user:bot` + `user:read:chat` tokens server-side. Never expose bot tokens to the browser.
+- Store per-streamer: `twitch_channel_id`, `eventsub_subscription_id`, connection status, token expiry. Handle token refresh and revocation.
+
 Security patterns:
 - Use SSR-compatible cookie/session handling for auth.
-- Never expose service-role credentials to the browser.
-- Validate all action inputs server-side.
+- Never expose service-role credentials or Twitch bot tokens to the browser.
+- Validate all action inputs server-side, including EventSub webhook HMAC signatures.
 - Enforce upload MIME/type/size limits before persistence.
 - Record moderation and DMCA actions with actor, target, timestamp, and state transition.
 
@@ -395,9 +411,17 @@ Pattern:
 - No broad public REST API for MVP.
 
 Realtime communication:
-- Use Supabase Realtime Broadcast for streamer controller, OBS view, and viewer voting session messages.
+- Use Supabase Realtime Broadcast for live vote aggregation and ephemeral chat feed broadcast to the streamer's matchup page only. There are no viewer WebSocket clients (web vote link does not exist).
 - Store authoritative match/session checkpoints in Postgres only where persistence is needed.
 - Treat Realtime messages as transient coordination, not the durable source of truth.
+
+Live voting architecture (Twitch chat):
+- `POST /api/twitch/eventsub` resource route: validate EventSub HMAC signature, parse `channel.chat.message`, extract first word, match `!a`/`!b` case-insensitively.
+- On valid vote: upsert to `live_votes (session_id, user_id, match_id, vote_value, voted_at)` with conflict target `(session_id, user_id, match_id)`.
+- After upsert: fetch aggregated `COUNT` per vote_value, broadcast `{ type: 'vote_update', match_id, vote_a, vote_b }` to Supabase Broadcast channel `live-session:{session_id}`.
+- For all chat messages (vote and non-vote): also broadcast `{ type: 'chat_message', userId, displayName, message, color, sentAt }` to the same Broadcast channel for the ChatPanel message feed. Do not persist raw chat messages to any table.
+- Streamer's matchup page (Streamer Live Mode active) subscribes to `live-session:{session_id}` Broadcast channel on mount and handles both `vote_update` and `chat_message` event types.
+- Do not subscribe to Postgres Changes for vote events. Do not log raw chat messages to any table.
 
 Error handling:
 - Route actions return typed validation errors for user-correctable problems.
@@ -426,8 +450,7 @@ Component architecture:
 
 Rendering strategy:
 - Home/browse/category/public bracket/result pages: SSR.
-- Matchup/play flow: CSR-heavy route with local state.
-- OBS browser source: dedicated lightweight CSR route optimized for 1920x1080 Chromium.
+- Matchup/play flow: CSR-heavy route with local state. Streamer Live Mode is an opt-in panel within this same route, optimized for 1920×1080 OBS screen capture; no separate OBS browser source route.
 - Public result pages must render OG metadata on the server.
 
 Testing:
@@ -479,11 +502,11 @@ Rules:
 
 The architecture assumes these failure modes are likely enough to design against from MVP.
 
-**OBS/session reliability:**
+**Live session/chat reliability:**
 - Realtime is a transient coordination layer, not the source of truth.
-- Active broadcast sessions must have a durable current-match checkpoint.
-- OBS reconnect must refetch the current session snapshot by `session_id`.
-- OBS route must stay lightweight and independent from viewer voting failure.
+- Active broadcast sessions must have a durable current-match checkpoint for vote context.
+- If the streamer's Supabase Realtime connection drops, local matchup play continues; vote counts resume on reconnect via `session_id`.
+- Live vote failure must not affect streamer's local matchup progression.
 
 **SEO/share reliability:**
 - Public bracket/result metadata must be generated through shared server-side helpers.
@@ -566,15 +589,15 @@ Use React Router loaders, actions, and resource routes as the application BFF la
 **Status:** Accepted
 
 **Context:**
-Live voting and OBS sync need low-latency coordination, but broadcast reliability cannot depend only on transient websocket messages.
+Live vote aggregation and chat feed display need low-latency broadcast to the streamer's matchup page, but broadcast reliability cannot depend only on transient websocket messages.
 
 **Decision:**
-Use Supabase Realtime Broadcast for transient session messages, while storing durable current-match checkpoints for active broadcast sessions.
+Use Supabase Realtime Broadcast for transient vote aggregation updates and ephemeral chat messages, while storing durable current-match checkpoints for active broadcast sessions.
 
 **Consequences:**
-- Positive: OBS reconnect can recover session state by `session_id`.
-- Positive: Viewer voting failure does not break streamer local control.
-- Positive: Realtime traffic can stay lightweight.
+- Positive: Streamer's matchup page can recover vote context by `session_id` on reconnect.
+- Positive: Live vote failure does not affect streamer's local matchup progression.
+- Positive: Realtime traffic can stay lightweight (aggregated counts only, raw chat not persisted).
 - Negative: Session state needs explicit modeling and checkpoint writes.
 - Negative: Developers must distinguish transient votes/messages from durable results.
 
@@ -624,7 +647,7 @@ Implement shared visibility and metadata policy modules used by public route loa
 7. Implement Supabase Auth for creator flows.
 8. Implement UGC creation and media upload/proxying.
 9. Implement comments, reports, moderation, and DMCA logs.
-10. Implement Supabase Realtime Broadcast for live voting/OBS sync.
+10. Implement Twitch EventSub webhook, live vote aggregation, and Supabase Realtime Broadcast for vote updates and chat feed to streamer matchup page.
 11. Add Cloudflare deployment config, cache headers, secrets, and monitoring.
 
 **Cross-Component Dependencies:**
@@ -864,8 +887,8 @@ Reserved initial event names:
 - `session.match.changed`
 - `session.vote.cast`
 - `session.vote.summary`
-- `session.controller.connected`
-- `session.obs.connected`
+- `session.chat.message`
+- `session.streamer.connected`
 - `session.snapshot.requested`
 - `session.snapshot.sent`
 
@@ -1062,7 +1085,6 @@ saveonedropone/
 │   │   ├── categories.$categorySlug.tsx
 │   │   ├── play.$bracketSlug.tsx
 │   │   ├── results.$resultId.tsx
-│   │   ├── obs.$sessionId.tsx
 │   │   ├── create._index.tsx
 │   │   ├── create.new.tsx
 │   │   ├── auth.callback.tsx
@@ -1076,9 +1098,6 @@ saveonedropone/
 │   │   │   ├── components/
 │   │   │   └── hooks/
 │   │   ├── matchup/
-│   │   │   ├── components/
-│   │   │   └── hooks/
-│   │   ├── obs/
 │   │   │   ├── components/
 │   │   │   └── hooks/
 │   │   ├── result/
@@ -1255,9 +1274,9 @@ Feature vs component rule:
 - Repositories: `app/repositories/comment.repository.server.ts`, `app/repositories/session.repository.server.ts`
 - Services: `app/services/rate-limit.server.ts`
 
-**스트리머 워크플로우 및 OBS (FR40-FR43):**
-- Routes: `app/routes/obs.$sessionId.tsx`
-- Features: `app/features/obs/`
+**스트리머 워크플로우 및 Streamer Live Mode (FR40, FR37-FR38):**
+- Routes: `app/routes/play.$bracketSlug.tsx` (스트리머는 동일한 매치업 라우트 사용)
+- Features: `app/features/matchup/` (StreamerLiveModePanel 포함)
 - Domain: `app/domain/session/`
 - Repositories: `app/repositories/session.repository.server.ts`
 - Services: `app/services/realtime.client.ts`
@@ -1399,7 +1418,7 @@ No epics/stories were loaded, so validation used PRD FR categories. All major fe
 - FR18-FR25 match/play/OBS display: covered by tournament domain, local play state, matchup feature, OBS route, session domain.
 - FR26-FR35 result/share: covered by result route, result domain, result repository, metadata helpers, fallback OG policy.
 - FR36-FR37 comments/live participation: covered by comments feature, schemas, rate limiting, session repository, realtime patterns.
-- FR40-FR43 streamer/OBS workflow: covered by OBS route, session checkpoint model, realtime client, feature hooks.
+- FR40, FR37-FR38 streamer workflow/live voting: covered by matchup route (Streamer Live Mode panel), session checkpoint model, Twitch EventSub service, realtime client, feature hooks.
 - FR44-FR46 moderation/DMCA: covered by moderation routes, visibility policy, moderation repository, action logs.
 - FR47-FR49 auth/account: covered by Supabase Auth, auth callback route, auth service.
 - FR50-FR52 monetization: MVP ad slot support is structurally allowed; billing/subscription features are deferred by design.

@@ -6,18 +6,21 @@ inputDocuments:
   - "_bmad-output/planning-artifacts/product-brief-saveonedropone.md"
   - "_bmad-output/planning-artifacts/product-brief-saveonedropone-distillate.md"
   - "_bmad-output/planning-artifacts/research/domain-saveonedropone-merged-streamer-bracket-research-2026-05-06.md"
+  - "_bmad-output/planning-artifacts/research/technical-gartic-on-stream-chat-integration-saveonedropone-research-2026-05-09.md"
   - "_bmad-output/brainstorming/brainstorming-session-2026-05-06-001.md"
 briefCount: 2
 researchCount: 1
 brainstormingCount: 1
 projectDocsCount: 0
 workflowType: 'prd'
-lastEdited: "2026-05-07"
+lastEdited: "2026-05-09"
 editHistory:
   - date: "2026-05-06"
     changes: "Validation-guided edit: clarified success metrics, aligned MVP scope and FR traceability, retained MVP comments, and rewrote NFRs with measurable acceptance criteria."
   - date: "2026-05-07"
     changes: "Validation-guided cleanup: clarified result comparison as Growth scope, aligned web framework guidance with project context, and tightened minor measurability wording."
+  - date: "2026-05-09"
+    changes: "Direction update: removed OBS Browser Source URL concept (FR17, FR25, NFR-P3, Browser Matrix, Journey 1, Responsive Design, Risk). Replaced with OBS screen capture via Streamer Live Mode. Realtime requirements updated to Twitch EventSub + Supabase Realtime Broadcast."
 classification:
   projectType: web_app
   domain: entertainment_creator_tools
@@ -38,7 +41,7 @@ Save One Drop One은 한국의 이상형 월드컵 포맷을 서구권 스트리
 
 ### What Makes This Special
 
-경쟁사(TierMaker, BracketFights)는 도구를 제공한다. Save One Drop One은 **콘텐츠 단위**를 제공한다. 핵심 제품 객체는 단순한 브라켓이 아니라 Bracket Pack — 제목, 썸네일, 참가 항목, 예상 진행 시간, OBS-friendly 레이아웃, 결과 이미지 내보내기, 결과 공유 링크, 공유 메타데이터를 하나의 패키지로 묶은 방송-ready 콘텐츠 단위다. 스트리머는 준비 없이 10분 이내 방송에 올릴 수 있다.
+경쟁사(TierMaker, BracketFights)는 도구를 제공한다. Save One Drop One은 **콘텐츠 단위**를 제공한다. 핵심 제품 객체는 단순한 브라켓이 아니라 Bracket Pack — 제목, 썸네일, 참가 항목, OBS-friendly 레이아웃, 결과 이미지 내보내기, 결과 공유 링크, 공유 메타데이터를 하나의 패키지로 묶은 방송-ready 콘텐츠 단위다. 스트리머는 준비 없이 10분 이내 방송에 올릴 수 있다.
 
 차별화의 두 번째 축은 포맷 인지도다. "Save One Drop One"은 K-팝 팬덤 커뮤니티(YouTube, Quotev, uQuiz, r/kpop)에서 이미 자생적으로 수백 개 시리즈가 존재한다. 신규 행동을 만드는 것이 아니라, 이미 검증된 수요에 전용 플랫폼을 제공하는 것이다. TierMaker가 광고·마케팅 없이 5개월 만에 15만 세션을 달성한 것과 동일한 UGC-SEO 플라이휠이 작동한다.
 
@@ -48,7 +51,7 @@ Save One Drop One은 한국의 이상형 월드컵 포맷을 서구권 스트리
 
 | 항목 | 값 |
 |------|-----|
-| **프로젝트 유형** | Web App (웹 우선, OBS 브라우저 소스 호환, 모바일 대응) |
+| **프로젝트 유형** | Web App (웹 우선, 방송 화면 공유 최적화, 모바일 대응) |
 | **도메인** | Entertainment / Creator Tools — 규제 도메인 해당 없음 |
 | **복잡도** | Medium — UGC 모더레이션, SEO 플라이휠, 실시간 방송 UI, 바이럴 루프 설계 포함 |
 | **프로젝트 컨텍스트** | Greenfield — 기존 시스템 없음, 신규 제품 |
@@ -97,7 +100,7 @@ Save One Drop One은 한국의 이상형 월드컵 포맷을 서구권 스트리
 
 ### Technical Success
 
-- 방송 화면(OBS 브라우저 소스 URL) 로드 시간 3초 이내, 방송 중 레이아웃 안정성 보장
+- 매치업 화면 초기 로드 3초 이내, Streamer Live Mode에서 OBS screen capture 시 레이아웃 안정성 보장
 - 공개 브라켓 페이지 — 각각 고유 title/description, Open Graph 이미지, canonical URL 보유
 - 결과 이미지 생성(브라켓 트리) Twitter/Reddit/Discord 공유 최적화 포맷
 - YouTube 링크 파싱: 제목, 썸네일, 시작 second 자동 추출 (항목 생성 시)
@@ -115,7 +118,7 @@ Save One Drop One은 한국의 이상형 월드컵 포맷을 서구권 스트리
 
 ### MVP — Minimum Viable Product
 
-- 방송-ready Bracket Pack 100개 이상 (K-팝·애니 우선, 게임·스포츠 확장 검증): 제목, 썸네일, 참가 항목, 예상 진행 시간, OBS 레이아웃, 공유 링크 포함
+- 방송-ready Bracket Pack 100개 이상 (K-팝·애니 우선, 게임·스포츠 확장 검증): 제목, 썸네일, 참가 항목, OBS 레이아웃, 공유 링크 포함
 - 첫 방문자 관심사 온보딩 팝업: 카테고리 선택(Music / Anime / Sports / Gaming 등) → 즉시 해당 브라켓 화면 진입 (계정 불필요)
 - 카테고리 내 세부 태그 탐색: 예) 카테고리 `게임` → 태그 `브롤스타즈`, `리그 오브 레전드`, `마인크래프트`
 - 1v1 토너먼트 플레이 UI (방송 최적화, 모바일 대응)
@@ -124,20 +127,20 @@ Save One Drop One은 한국의 이상형 월드컵 포맷을 서구권 스트리
 - OBS 브라우저 소스 호환 방송 레이아웃
 - 결과 브라켓 트리 이미지 내보내기 (Twitter/Reddit/Discord 공유 최적화)
 - 결과 화면 플레이 통계: 총 소요 시간, 선택 경로, 커뮤니티 집계 결과 표시
-- 방송 중 시청자 참여 링크 기반 실시간 투표
+- Twitch 채팅 !A/!B 명령어 기반 실시간 투표 집계 (채팅 명령어가 유일한 시청자 참여 방식; 별도 웹 투표 링크 없음; 스트리머가 Twitch OAuth `channel:bot` scope 동의를 완료해야 채널 연동 활성화; YouTube 채팅은 Growth)
 - 공개 결과 페이지 댓글: 방송 후 논쟁과 재방문을 유도하되 신고·삭제·비공개 처리와 연결
 - UGC 브라켓 생성:
   - YouTube 링크 붙여넣기 → 제목·썸네일·시작 second 자동 추출
   - 이미지 URL 붙여넣기(imgur 등) → 항목 이미지 즉시 설정
   - 공개 인덱싱 지원
-- Bracket Pack preview mode 및 Curated/UGC 구분 표시
+- Bracket Pack preview mode
 - 최소 UGC 운영 기능: 공개/비공개 상태, 신고, 관리자 takedown
 - 기본 광고 슬롯 (결과 화면)
 
 ### Growth Features (Post-MVP)
 
 - 결과 비교 화면 (두 사용자 결과 나란히) — 바이럴 루프 검증 후 효과 재평가
-- Twitch Extension 라이브 폴 연동 (v1.5)
+- YouTube 채팅 !A/!B 연동 (Twitch 채팅 연동 안정화 이후; Cloudflare Workers의 gRPC streamList 호환성 검증 선행 필요)
 - 즐겨찾기, 플레이 히스토리, 저장된 브라켓 재방문 흐름
 - 크리에이터 애널리틱스 대시보드
 - 커스텀 테마·브랜딩 (방송 프리미엄 스킨)
@@ -161,13 +164,13 @@ Save One Drop One은 한국의 이상형 월드컵 포맷을 서구권 스트리
 
 *Opening Scene:* Maya는 오늘 저녁 방송 주제를 고민하고 있다. 지난 주 TierMaker로 아이돌 랭킹을 했는데 채팅이 꽤 활발했다. 비슷한 포맷을 찾다가 트위터에서 Save One Drop One 링크를 발견한다. 클릭하니 K-팝 카테고리 브라켓이 이미 수십 개 준비되어 있다.
 
-*Rising Action:* "4세대 걸그룹 멤버 64강"을 클릭한다. 썸네일이 깔끔하고, 예상 진행 시간이 90분으로 표시된다. "방송 시작" 버튼을 누르자 OBS용 URL이 복사된다. OBS에 붙여넣고 미리보기를 확인한다 — 이미지가 크고 선명하다. 총 소요 시간: 6분.
+*Rising Action:* "4세대 걸그룹 멤버 64강"을 클릭한다. 썸네일이 깔끔하다. "방송 시작"을 결정하고 매치업 화면으로 진입한다. OBS에서 화면 캡처 소스로 해당 탭을 설정하고 미리보기를 확인한다 — 이미지가 크고 선명하다. 총 소요 시간: 6분.
 
 *Climax:* 방송 중 "BLACKPINK vs aespa" 매치가 나오는 순간 채팅이 폭발한다. Maya가 aespa를 선택하자 구독자들이 "틀렸어요!" "이건 진짜 논란이다"를 쏟아낸다.
 
 *Resolution:* 방송 후 결과 이미지를 트위터에 올린다. "내 최종 1위가 이거였는데 동의해?" — 6시간 만에 리트윗 200개. 링크를 타고 들어온 팬들이 직접 플레이를 시작한다. 다음 주 방송 주제는 이미 정했다: "4세대 보이그룹 편."
 
-**요구 기능:** 카테고리별 큐레이션 라이브러리, 예상 진행 시간 표시, OBS URL 원클릭 복사, 결과 이미지 내보내기(Twitter 최적화)
+**요구 기능:** 카테고리별 큐레이션 라이브러리, 방송 최적화 매치업 레이아웃(1920×1080 screen capture 대응), 결과 이미지 내보내기(Twitter 최적화)
 
 ---
 
@@ -225,7 +228,7 @@ Save One Drop One은 한국의 이상형 월드컵 포맷을 서구권 스트리
 |----------|---------|--------|------------|--------|
 | 큐레이션 브라켓 라이브러리 | ★★★ | ★★ | — | — |
 | 온보딩 팝업 (카테고리 선택) | — | ★★★ | — | — |
-| OBS URL 복사 | ★★★ | — | — | — |
+| 방송 화면 공유 최적화 | ★★★ | — | — | — |
 | 익명 플레이 | — | ★★★ | — | — |
 | 결과 이미지 내보내기 | ★★★ | ★★★ | — | — |
 | 공개 결과 댓글 | ★★ | ★★★ | — | ★★ |
@@ -281,7 +284,7 @@ Save One Drop One은 한국의 이상형 월드컵 포맷을 서구권 스트리
 | DMCA 신고 폭증 | 신고-삭제 자동화 + 관리자 큐 + 반복 침해자 차단 |
 | K-팝/애니 IP 분쟁 | 팬 UGC 특성 유지, 상업 캠페인 확장 시 별도 라이선싱 검토 |
 | 광고 차단기 (게이밍 오디언스 ~40%+) | 결과 화면 광고 집중, 크리에이터 프리미엄 수익 비중 중장기 확대 |
-| OBS 방송 중 레이아웃 깨짐 | 방송 URL 별도 경량 페이지, 스트레스 테스트 필수 |
+| OBS screen capture 중 레이아웃 깨짐 | Streamer Live Mode 매치업 화면 1920×1080 스트레스 테스트 필수 |
 | 미성년 개인정보 | 익명 플레이 기본값, 계정 수집 최소화 |
 
 ## Innovation & Novel Patterns
@@ -294,11 +297,11 @@ Save One Drop One은 한국의 이상형 월드컵 포맷을 서구권 스트리
 
 **2. 제품 단위 혁신: 도구 → 콘텐츠 단위**
 
-기존 경쟁사(TierMaker, BracketFights)는 "도구"를 제공한다. Save One Drop One은 **Bracket Pack이라는 콘텐츠 단위**를 제공한다. 제목, 썸네일, 예상 진행 시간, OBS 레이아웃, 공유 메타데이터가 하나로 묶인 방송-ready 패키지는 스트리머의 준비 시간을 제거한다. "켜면 방송이 시작되는 콘텐츠 단위"는 스트리머 도구 시장에서 새로운 제품 범주를 정의한다.
+기존 경쟁사(TierMaker, BracketFights)는 "도구"를 제공한다. Save One Drop One은 **Bracket Pack이라는 콘텐츠 단위**를 제공한다. 제목, 썸네일, OBS 레이아웃, 공유 메타데이터가 하나로 묶인 방송-ready 패키지는 스트리머의 준비 시간을 제거한다. "켜면 방송이 시작되는 콘텐츠 단위"는 스트리머 도구 시장에서 새로운 제품 범주를 정의한다.
 
 **3. 채널 혁신: 브라켓 + 방송 워크플로우의 결합**
 
-브라켓 도구와 방송 워크플로우 최적화(OBS 브라우저 소스)를 결합한 제품은 서구권에 존재하지 않는다. 스트리머가 방송 중 브라켓을 진행하면 시청자가 웹 링크로 동시 투표하고, 방송 후 같은 브라켓을 재플레이하는 "방송-재생산" 루프는 어떤 기존 제품도 완성하지 못한 인터랙션 패턴이다.
+브라켓 도구와 방송 워크플로우 최적화(OBS 브라우저 소스)를 결합한 제품은 서구권에 존재하지 않다. 스트리머가 방송 중 브라켓을 진행하면 시청자가 Twitch 채팅 명령어(!A/!B)로 직접 투표하고, 방송 후 같은 브라켓을 재플레이하는 "방송-재생산" 루프는 어떤 기존 제품도 완성하지 못한 인터랙션 패턴이다. 채팅창을 떠나지 않고 투표하는 방식은 방송 몰입을 유지하며 참여율을 높인다.
 
 **4. 성장 루프 혁신: 스트리머-시청자-UGC-SEO 복합 플라이휠**
 
@@ -345,21 +348,20 @@ Save One Drop One은 React Router 7 framework mode 기반의 SSR/SSG 하이브�
 - 데이터 저장소, 백엔드 런타임, 배포 플랫폼: **아키텍처 단계에서 결정**
 
 **실시간 요건**
-- 방송 컨트롤러(관리자) ↔ OBS 화면 동기화 필요 (다음 라운드 진행 시 즉시 반영)
-- 구현 방식(WebSocket, SSE, 3rd-party 실시간 라이브러리): **아키텍처 단계에서 결정**
+- Twitch 채팅 !A/!B 투표 집계 및 채팅 피드를 매치업 화면에 실시간 표시
+- 구현 방식(Twitch EventSub + Supabase Realtime Broadcast): **아키텍처 단계에서 결정**
 
 ### Browser Matrix
 
 | 환경 | 지원 범위 |
 |------|---------|
 | 일반 사용자 (플레이, UGC 생성) | Chrome, Firefox, Safari, Edge 최신 2버전 |
-| OBS 브라우저 소스 (방송 레이아웃) | Chromium 기반 — OBS 내장 브라우저 최적화 필수 |
 | 모바일 | iOS Safari, Android Chrome 최신 2버전 |
 | IE / 구형 브라우저 | 미지원 |
 
 ### Responsive Design
 
-- **방송 레이아웃**: 고정 해상도 최적화 (1920×1080 기준) — OBS 캔버스 사이즈 맞춤, 반응형 불필요
+- **방송 레이아웃**: Streamer Live Mode 활성 시 매치업 화면은 1920×1080 OBS screen capture에서 잘림 없이 표시되어야 함 (고정 aspect-ratio 컨테이너 사용)
 - **플레이 UI**: 모바일 우선 반응형 — 시청자가 스마트폰으로 플레이하는 시나리오가 주
 - **UGC 생성 도구**: 데스크탑 위주이나 태블릿 대응 권장
 - **랜딩·브라켓 목록·결과 페이지**: 완전 반응형 (SEO 트래픽의 모바일 비중 고려)
@@ -427,9 +429,9 @@ Save One Drop One은 React Router 7 framework mode 기반의 SSR/SSG 하이브�
 - 결과 브라켓 트리 이미지 내보내기 (SNS 공유 최적화)
 - 결과 화면 플레이 통계 및 커뮤니티 집계 결과
 - 공개 결과 페이지 댓글
-- 방송 중 시청자 참여 링크 기반 실시간 투표
+- Twitch 채팅 !A/!B 명령어 기반 실시간 투표 집계 (YouTube는 Growth)
 - UGC 브라켓 생성 (YouTube URL 파싱, 이미지 URL 입력, 공개 인덱싱)
-- Curated/UGC 구분 표시 및 preview mode
+- Bracket Pack preview mode
 - 최소 UGC 운영 기능 (공개/비공개, 신고, 관리자 takedown)
 - 기본 광고 슬롯 (결과 화면)
 - 공개 브라켓 SEO 페이지 (SSR, Open Graph, sitemap)
@@ -459,7 +461,7 @@ Save One Drop One은 React Router 7 framework mode 기반의 SSR/SSG 하이브�
 
 | 리스크 | 완화 방향 |
 |--------|---------|
-| OBS 방송 중 레이아웃 불안정 | 방송 URL 전용 경량 페이지 분리, OBS 환경 스트레스 테스트 우선 |
+| OBS screen capture 중 레이아웃 불안정 | Streamer Live Mode 매치업 화면 1920×1080 안정성 테스트 우선 |
 | YouTube API 쿼터 초과 | oEmbed fallback + 수동 입력 경로 확보, 캐싱으로 API 호출 최소화 |
 | 결과 이미지 생성 지연 | 서버 사이드 렌더링 vs Canvas API 아키텍처 단계에서 성능 검증 |
 | 실시간 동기화 복잡도 | 3rd-party 라이브러리 우선 검토, 아키텍처 단계에서 결정 |
@@ -515,13 +517,13 @@ Save One Drop One은 React Router 7 framework mode 기반의 SSR/SSG 하이브�
 | FR14a | 시스템은 선택한 토너먼트 크기가 2의 거듭제곱이 아니어도 부전승을 자동 배정해 유효한 1v1 브라켓으로 진행한다 | MVP |
 | FR15 | 생성자는 브라켓을 공개/비공개로 설정할 수 있다 | MVP |
 | FR16 | 생성자는 기존 Bracket Pack을 복제하여 수정할 수 있다 | Growth |
-| FR17 | 시스템은 Bracket Pack 생성 완료 즉시 OBS 브라우저 소스 URL을 제공한다 | MVP |
+| FR17 | 시스템은 Bracket Pack 생성 완료 즉시 공개 브라켓 URL을 제공한다 | MVP |
 
 ### 3. 매치업 (1v1 게임 루프)
 
 | FR | 설명 | Phase |
 |----|------|-------|
-| FR18 | 플레이어는 브라켓 시작 시 전체 참가자 목록과 예상 소요 시간을 확인할 수 있다 | MVP |
+| FR18 | 플레이어는 브라켓 시작 시 전체 참가자 목록을 확인할 수 있다 | MVP |
 | FR19 | 플레이어는 매 라운드에서 두 항목(A vs B)을 비교하고 하나를 선택할 수 있다 | MVP |
 | FR20 | 플레이어는 키보드(A / D 키) 또는 클릭으로 선택할 수 있다 | MVP |
 | FR21 | 시스템은 현재 매치의 진행 경과(라운드, 매치 번호, 진행 도트)를 표시한다 | MVP |
@@ -529,7 +531,7 @@ Save One Drop One은 React Router 7 framework mode 기반의 SSR/SSG 하이브�
 | FR23 | 플레이어는 처음부터 재시작하는 Restart를 사용할 수 있다 | MVP |
 | FR24 | 시스템은 플레이어의 브라켓 진행 상태를 로컬에 자동 저장하며, 새로고침 후에도 현재 라운드·선택 이력·남은 매치가 유지된다 | MVP |
 | FR24a | 플레이어가 미완료 브라켓에 다시 방문하면 처음부터 시작 또는 이어하기를 선택할 수 있다 | MVP |
-| FR25 | OBS 시청자는 방송 모드 화면을 16:9 레이아웃으로 보며, 1920×1080 캔버스에서 주요 항목 이미지·이름·진행 상태가 잘림 없이 표시된다 | MVP |
+| FR25 | 매치업 화면은 OBS screen capture 시 1920×1080 해상도에서 주요 항목 이미지·이름·진행 상태가 잘림 없이 표시된다 | MVP |
 
 ### 4. 결과 및 공유
 
@@ -545,24 +547,23 @@ Save One Drop One은 React Router 7 framework mode 기반의 SSR/SSG 하이브�
 | FR33 | 공개 결과 페이지는 OG 이미지와 메타 태그를 포함한 SSR 렌더링으로 제공된다 | MVP |
 | FR34 | 방문자는 결과 공유 링크를 클릭하면 해당 브라켓의 결과 화면으로 직접 이동할 수 있다 | MVP |
 | FR35 | 방문자는 결과 화면에서 "Play again" 버튼으로 자신의 플레이를 시작할 수 있다 | MVP |
+| FR35a | 방문자는 Community Verdict 패널에서 "View all N"을 눌러 전체 참가자의 커뮤니티 선택 % 랭킹을 볼 수 있다 | MVP |
+| FR35b | 방문자는 Final Eight 패널에서 "View all N"을 눌러 전체 브라켓 트리를 풀스크린 모달로 볼 수 있다. 모달에는 zoom/drag, 라운드 범위 필터(전체/상위 N), Save Image 기능이 포함된다 | MVP |
 
 ### 5. 소셜 참여 및 커뮤니티
 
 | FR | 설명 | Phase |
 |----|------|-------|
 | FR36 | 방문자는 공개 브라켓 결과 페이지에 댓글을 작성할 수 있으며, 작성된 댓글은 신고·비공개 처리 대상이 될 수 있다 | MVP |
-| FR37 | 방송 중 시청자는 현재 스트리머의 매치업에 실시간으로 투표할 수 있다 (라이브 참여 링크 공유 방식) | MVP |
-| FR38 | 채팅 시청자는 !A 또는 !B 채팅 명령어로 현재 매치에 실시간 투표할 수 있다 (Twitch/YouTube 채팅 연동) | Growth |
-| FR39 | 매치업 화면에는 실시간 채팅 투표 집계(A% vs B%)가 표시된다 | Growth |
+| FR37 | 채팅 시청자는 !A 또는 !B 채팅 명령어로 현재 매치에 실시간 투표할 수 있다 (Twitch/YouTube 채팅 연동) | MVP |
+| FR38 | 매치업 화면에는 실시간 채팅 투표 집계(A% vs B%)가 표시된다 | MVP |
 
 ### 6. 스트리머 워크플로우 및 방송 통합
 
 | FR | 설명 | Phase |
 |----|------|-------|
-| FR40 | 스트리머는 OBS 브라우저 소스 URL 하나로 방송에 브라켓을 추가할 수 있다 | MVP |
-| FR41 | OBS 레이아웃은 스트리머가 로컬에서 키보드로 조작하고 방송에서 실시간 반영된다 | MVP |
-| FR42 | 스트리머 대시보드에서 자신이 만든 Bracket Pack 목록과 플레이 통계를 확인할 수 있다 | Growth |
-| FR43 | 스트리머는 시청자 참여 링크를 채팅에 공유할 수 있는 단축 URL을 5초 이내 생성할 수 있다 | MVP |
+| FR40 | 스트리머는 키보드(A/D 키)로 매치를 진행할 수 있다 | MVP |
+| FR41 | 스트리머 대시보드에서 자신이 만든 Bracket Pack 목록과 플레이 통계를 확인할 수 있다 | Growth |
 
 ### 7. UGC 모더레이션 및 플랫폼 안전
 
@@ -600,7 +601,7 @@ Save One Drop One은 React Router 7 framework mode 기반의 SSR/SSG 하이브�
 |----|------|----------------------|-------|
 | NFR-P1 | 매치업 화면 전환(라운드 간) LCP ≤ 1.5s | 데스크톱 Chrome, warm cache, 대표 64강 브라켓 기준 Lighthouse 또는 동등한 Web Vitals 측정에서 p75 LCP ≤ 1.5s | MVP |
 | NFR-P2 | 공개 브라켓 결과 페이지 첫 로드 FCP ≤ 2s | 모바일 4G 시뮬레이션과 데스크톱 broadband 조건에서 대표 결과 페이지 5개를 측정해 p75 FCP ≤ 2s | MVP |
-| NFR-P3 | OBS 브라우저 소스 키 입력 → 화면 반영 레이턴시 ≤ 100ms | OBS 내장 Chromium 환경에서 로컬 키 입력 후 라운드 UI 변경까지의 p95 지연 시간이 100ms 이하 | MVP |
+| NFR-P3 | 매치업 화면 키 입력(A/D) → UI 반영 레이턴시 ≤ 100ms | 로컬 키 입력 후 다음 라운드 UI 변경까지의 p95 지연 시간이 100ms 이하 | MVP |
 | NFR-P4 | 결과 이미지 생성(다운로드 준비) ≤ 3s | 64강 브라켓 결과 기준, Generate 클릭부터 다운로드 가능 상태까지 p95 ≤ 3s | MVP |
 
 ### 확장성 (Scalability)
