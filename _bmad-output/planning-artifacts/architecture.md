@@ -313,7 +313,7 @@ If initializing inside the existing repository rather than creating a nested pro
 
 **Code Organization:**
 - React Router app structure with route modules
-- Public SEO routes should be separated from CSR-heavy play/OBS routes
+- Public SEO route concerns should be separated from CSR-heavy matchup components inside the canonical bracket play-entry route
 - Domain logic should live outside route components so tournament generation, byes, undo/restart, result reconstruction, and image generation can be tested independently
 
 **Development Experience:**
@@ -370,7 +370,8 @@ Data modeling approach:
 - `bracket_packs` is the core content object.
 - `bracket_entries` stores candidate items and media references.
 - `play_results` stores completed public/shareable results, not every anonymous in-progress local state.
-- `comments`, `reports`, `moderation_actions`, and `dmca_requests` are first-class tables.
+- `comment_sessions` maps anonymous commenter identity: `session_id` (UUID, PK — value of client `anon_token` localStorage key, 90-day expiry), `display_name` (auto-generated adjective+noun, assigned once on first comment), `color_hue` (INT 0–360, fixed per session for avatar rendering), `created_at`, `last_seen_at`. Created server-side on first comment submission from an unknown `session_id`. `display_name` is also denormalized into each `comments` row so past comments remain readable after a session record expires or is cleaned up.
+- `comments`, `reports`, `moderation_actions`, and `dmca_requests` are first-class tables. `comments` includes `session_id FK → comment_sessions`, a denormalized `display_name` column, and a `hot_takes_flag` (BOOLEAN nullable) column. `hot_takes_flag` is set at comment insertion time by querying `entry_champion_stats` for the bracket pack: compute the 25th percentile pick rate among entries with `champion_count > 0`; set `true` if the commenter's champion falls below P25 and `total_plays >= 100`, otherwise `null`. A `null` flag causes the Hot takes filter chip to be hidden on the result page.
 - `analytics_events` records product loop metrics: streamer repeat use, derived viewer sessions, result shares, and share-link returns.
 - `live_sessions` stores active broadcast session metadata: streamer user, bracket pack, current match, Twitch channel ID, connection status, and EventSub subscription ID.
 - `entry_champion_stats` stores per-entry aggregated pick percentages: `(bracket_pack_id, entry_id)` unique, `champion_count` (times picked as champion), `total_plays` (total completed plays for the bracket pack), `updated_at`. Upserted atomically when a `play_result` is saved. Community ranking % = `champion_count / total_plays`. Insufficient state threshold: 100 total plays (configurable). Pagination: result route loader fetches first 30 entries ordered by `champion_count DESC`; subsequent pages use cursor-based pagination via fetcher on scroll ("load more").
@@ -467,8 +468,9 @@ Component architecture:
 - Production design tokens should be extracted from the current `docs/design` HTML/JSX references; do not fork color/type values into unrelated ad hoc constants.
 
 Rendering strategy:
-- Home/browse/category/public bracket/result pages: SSR.
-- Matchup/play flow: CSR-heavy route with local state. Streamer Live Mode is an opt-in panel within this same route, optimized for 1920×1080 OBS screen capture; no separate OBS browser source route.
+- Home/browse/category/result pages: SSR.
+- Public bracket route `/brackets/:categorySlug/:bracketSlug` is the canonical SSR play-entry route, not a separate detail page. It emits SEO/OG/canonical metadata server-side, then hydrates into tournament size selection and the CSR-heavy matchup flow. Do not add a separate detail page or extra click before play.
+- Matchup/play flow after hydration is CSR-heavy with local state. Streamer Live Mode is an opt-in panel within this same route, optimized for 1920×1080 OBS screen capture; no separate OBS browser source route.
 - Public result pages must render OG metadata on the server.
 
 Testing:
@@ -500,7 +502,7 @@ npm create cloudflare@latest -- saveonedropone --framework=react-router
 
 Important caveat:
 - Cloudflare's React Router support currently does not support SPA mode or prerendering through the Cloudflare Vite plugin.
-- This is acceptable for MVP because public pages require SSR, while play/OBS routes can still be client-heavy after SSR/hydration.
+- This is acceptable for MVP because public pages require SSR, while the canonical bracket play-entry route can still become client-heavy after SSR/hydration.
 - If static prerendering becomes a hard requirement for high-volume SEO pages, revisit hosting or introduce a separate static generation pipeline.
 
 ### Cloudflare Runtime Constraints
@@ -672,7 +674,7 @@ Implement shared visibility and metadata policy modules used by public route loa
 - Auth affects Bracket Pack creation, moderation, admin, and creator dashboards.
 - Moderation state affects SEO, caching, ads, public visibility, and result/comment availability.
 - Media storage affects public page performance, OBS stability, and result image generation.
-- Tournament engine affects play UI, OBS route, result reconstruction, and analytics.
+- Tournament engine affects play UI, Streamer Live Mode, result reconstruction, and analytics.
 - Realtime sync depends on durable session identifiers and bracket/match state shape.
 
 ## Implementation Patterns & Consistency Rules
@@ -1276,7 +1278,7 @@ Feature vs component rule:
 - Repositories: `app/repositories/bracket-pack.repository.server.ts`
 
 **매치업 / 1v1 게임 루프 (FR18-FR25):**
-- Routes: `app/routes/play.$bracketSlug.tsx`
+- Routes: `app/routes/brackets.$categorySlug.$bracketSlug.tsx` (canonical SSR play-entry route; no separate detail page)
 - Features: `app/features/matchup/`
 - Domain: `app/domain/tournament/`
 - Local persistence: `app/domain/tournament/local-play-state.ts`
@@ -1298,7 +1300,7 @@ Feature vs component rule:
 - Services: `app/services/rate-limit.server.ts`
 
 **스트리머 워크플로우 및 Streamer Live Mode (FR40, FR37-FR38):**
-- Routes: `app/routes/play.$bracketSlug.tsx` (스트리머는 동일한 매치업 라우트 사용)
+- Routes: `app/routes/brackets.$categorySlug.$bracketSlug.tsx` (스트리머는 동일한 canonical bracket route 사용)
 - Features: `app/features/matchup/` (StreamerLiveModePanel 포함)
 - Domain: `app/domain/session/`
 - Repositories: `app/repositories/session.repository.server.ts`
@@ -1317,7 +1319,9 @@ Feature vs component rule:
 - Services: `app/services/auth.server.ts`, `app/services/supabase.server.ts`
 
 **수익화 / 광고 (FR50-FR52):**
-- MVP에서는 광고 슬롯 구조만 결과/공개 페이지 컴포넌트에 준비한다.
+- MVP에서는 실제 광고 슬롯 UI, 광고 provider script, slot refresh/reload 로직을 구현하지 않는다.
+- MVP에서는 moderation/visibility policy가 향후 광고 노출 가능 여부를 판단할 수 있도록 `ad eligibility` 상태만 포함한다.
+- FR50-FR52는 Growth/Vision 구현 범위로 유지한다.
 - Growth/Vision billing은 deferred; 별도 `billing` 구조를 지금 만들지 않는다.
 
 ### Integration Points
@@ -1438,16 +1442,16 @@ No epics/stories were loaded, so validation used PRD FR categories. All major fe
 **Functional Requirements Coverage:**
 - FR1-FR7 browse/home: covered by public SSR routes, browse feature, bracket repository, metadata/cache helpers.
 - FR8-FR17 Bracket Pack creation: covered by create routes, bracket schema, storage service, YouTube metadata service, repository layer, auth boundary.
-- FR18-FR25 match/play/OBS display: covered by tournament domain, local play state, matchup feature, OBS route, session domain.
+- FR18-FR25 match/play/OBS display: covered by tournament domain, local play state, matchup feature, canonical bracket play-entry route, session domain.
 - FR26-FR35c result/share: covered by result route, result domain, result repository, bracket-pack recommendations query, metadata helpers, fallback OG policy. FR35a (Community Ranking): `entry_champion_stats` table upserted on result save; initial page (first 30 entries) loaded in the result route loader alongside result data; subsequent pages fetched via fetcher (cursor-based pagination) as the user scrolls. FR35b (Full Bracket Modal): client-side Canvas export of bracket tree; feature lives in `features/result/`. FR35c: same-category More in rail is loaded server-side with the current bracket excluded.
 - FR36-FR37 comments/live participation: covered by comments feature, schemas, rate limiting, session repository, realtime patterns.
 - FR40, FR37-FR38 streamer workflow/live voting: covered by matchup route (Streamer Live Mode panel), session checkpoint model, Twitch EventSub service, realtime client, feature hooks.
 - FR44-FR46 moderation/DMCA: covered by moderation routes, visibility policy, moderation repository, action logs.
 - FR47-FR49 auth/account: covered by Supabase Auth, auth callback route, auth service.
-- FR50-FR52 monetization: MVP ad slot support is structurally allowed; billing/subscription features are deferred by design.
+- FR50-FR52 monetization: actual ad slots, provider scripts, billing, and subscription features are deferred by design; MVP keeps only ad eligibility policy state for moderation/visibility consistency.
 
 **Non-Functional Requirements Coverage:**
-- Performance: addressed through SSR/CDN cache, local-first play, lightweight OBS route, result image off critical SSR path.
+- Performance: addressed through SSR/CDN cache, local-first play, same-route Streamer Live Mode, result image off critical SSR path.
 - Scalability: addressed through Cloudflare cache, Supabase managed services, local-first transient state, summary persistence.
 - Availability: supported by managed Cloudflare/Supabase split; operational monitoring uses PostHog for MVP product/application event visibility.
 - Security: covered by Supabase Auth, server-only service role access, RLS, validation, rate limiting, Worker secrets.

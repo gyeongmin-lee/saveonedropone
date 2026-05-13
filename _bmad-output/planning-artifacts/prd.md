@@ -69,7 +69,7 @@ Save One Drop One은 한국의 이상형 월드컵 포맷을 서구권 스트리
 
 **시청자 성공 기준**
 - 단일 스트리머 방송 1회에서 파생된 시청자 개인 플레이 세션 **1,000회 이상**
-- 첫 방문자가 관심사 기반 온보딩(카테고리 선택 팝업)을 통해 10초 이내 첫 브라켓에 도달
+- 첫 방문자가 홈 Popular Brackets 또는 공유 링크 유입을 통해 10초 이내 첫 브라켓에 도달
 - 결과 이미지 공유 후 링크를 통한 재방문 세션이 분석 이벤트로 추적되며, 초기 검증용 Bracket Pack 1개 이상에서 공유 링크 유입 세션 50회 이상 발생
 - 계정 없이 투표·플레이 완료 가능 (마찰 제로)
 
@@ -137,10 +137,11 @@ Save One Drop One은 한국의 이상형 월드컵 포맷을 서구권 스트리
   - 공개 인덱싱 지원
 - Bracket Pack preview mode
 - 최소 UGC 운영 기능: 공개/비공개 상태, 신고, 관리자 takedown
-- 기본 광고 슬롯 (결과 화면)
+- 광고 적합성 정책 hook: 실제 광고 슬롯은 Growth로 두되, moderation이 향후 광고 노출 가능 여부를 일관되게 제어할 수 있도록 `ad eligibility` 상태를 visibility/moderation 모델에 포함
 
 ### Growth Features (Post-MVP)
 
+- 실제 광고 슬롯 및 AdSense/AdX/provider script 연동
 - 개인화 탐색/For You/관심사 온보딩 — MVP 바이럴 루프 검증 이후 재평가
 - 결과 비교 화면 (두 사용자 결과 나란히) — 바이럴 루프 검증 후 효과 재평가
 - YouTube 채팅 !A/!B 연동 (Twitch 채팅 연동 안정화 이후; Cloudflare Workers의 gRPC streamList 호환성 검증 선행 필요)
@@ -268,6 +269,7 @@ Save One Drop One은 한국의 이상형 월드컵 포맷을 서구권 스트리
 
 **SEO & 크롤링**
 - 모든 공개 브라켓 페이지: SSR 또는 Static Generation 필수 (SPA-only는 검색 인덱싱 불가)
+- 공개 브라켓 URL은 별도 상세 페이지가 아니라 SSR 가능한 플레이 진입 route다. 사용자는 홈/카테고리/공유 링크에서 `/brackets/[category]/[slug]`로 이동하면 같은 화면에서 바로 tournament size 선택 또는 matchup play를 시작한다. 클릭 수를 늘리는 Bracket Detail page는 MVP에 포함하지 않는다.
 - 각 페이지: 고유 `<title>`, `<meta description>`, Open Graph 태그, canonical URL
 - 신고로 비공개 전환된 페이지: noindex 즉시 적용, 검색엔진 캐시 제거 요청 플로우 확보
 
@@ -344,7 +346,7 @@ Save One Drop One은 React Router 7 framework mode 기반의 SSR/SSG 하이브�
 ### Technical Architecture Considerations
 
 **렌더링 전략**
-- 공개 브라켓 페이지, 카테고리 페이지, 결과 공유 페이지: SSR 또는 Static Generation 필수 — 검색 인덱싱 보장
+- 공개 브라켓 플레이 진입 페이지, 카테고리 페이지, 결과 공유 페이지: SSR 또는 Static Generation 필수 — 검색 인덱싱 보장
 - 플레이 UI (1v1 진행 화면): 클라이언트 사이드 SPA — 빠른 인터랙션 우선
 - OBS 방송 레이아웃 페이지: 경량 정적/SSR 페이지 — Chromium 브라우저 소스 환경에서 안정적 로드
 - 프레임워크: **React Router 7 framework mode 확정**. Next.js는 사용하지 않는다.
@@ -373,7 +375,7 @@ Save One Drop One은 React Router 7 framework mode 기반의 SSR/SSG 하이브�
 
 | 페이지 유형 | 목표 |
 |-----------|------|
-| 공개 브라켓 페이지 (SEO 랜딩) | LCP < 2.5s, CLS < 0.1 (Core Web Vitals 기준) |
+| 공개 브라켓 플레이 진입 페이지 (SEO 랜딩 + tournament start) | LCP < 2.5s, CLS < 0.1 (Core Web Vitals 기준) |
 | OBS 방송 레이아웃 | 초기 로드 < 3s, 이후 라운드 전환 < 500ms |
 | 플레이 UI (1v1 선택 화면) | 선택 후 다음 매치 전환 < 300ms |
 | 결과 이미지 생성 | < 3s (브라켓 트리 렌더링 + 다운로드 준비) |
@@ -382,6 +384,7 @@ Save One Drop One은 React Router 7 framework mode 기반의 SSR/SSG 하이브�
 
 - 모든 공개 브라켓 페이지: 고유 `<title>`, `<meta description>`, Open Graph 태그, canonical URL 필수
 - URL 구조: `/brackets/[category]/[slug]` — 카테고리 taxonomy가 URL에 반영
+- `/brackets/[category]/[slug]`는 canonical SSR play-entry route이며, 별도 상세 페이지를 거치지 않는다
 - 카테고리 페이지(`/categories/[categorySlug]`): 독립 SEO 랜딩 페이지로 운영
 - 결과 공유 페이지: 챔피언 이미지 또는 fallback OG 이미지를 포함하고, `og:title`은 `[Champion] wins [Bracket Pack]!`, `og:description`은 플레이 수 기반 문구로 생성한다
 - 비공개 전환 브라켓: `noindex` 즉시 적용
@@ -400,7 +403,7 @@ Save One Drop One은 React Router 7 framework mode 기반의 SSR/SSG 하이브�
 - **YouTube 데이터 API**: 항목 생성 시 메타데이터 자동 추출 — API 키 관리, 쿼터 제한 처리, 실패 시 수동 입력 fallback 필요
 - **이미지 프록시/캐싱**: 외부 이미지 URL(imgur, YouTube CDN) 장기 안정성 불보장 — 중요 이미지 자체 스토리지 복사 권장
 - **결과 이미지 생성**: 브라켓 트리 PNG/JPG 내보내기 — Canvas API 또는 서버 사이드 렌더링 방식은 아키텍처 단계에서 결정
-- **광고 슬롯**: 결과 화면 광고 — AdSense/AdX 스크립트 삽입, Core Web Vitals 영향 최소화 필요
+- **광고 적합성 정책**: MVP는 실제 광고 슬롯, AdSense/AdX 스크립트, slot refresh를 구현하지 않는다. 단, UGC moderation이 향후 광고 노출 가능 여부를 일관되게 제어할 수 있도록 `ad eligibility` 상태와 정책 hook은 visibility/moderation 모델에 포함한다.
 
 ## Project Scoping & Phased Development
 
@@ -437,7 +440,7 @@ Save One Drop One은 React Router 7 framework mode 기반의 SSR/SSG 하이브�
 - UGC 브라켓 생성 (YouTube URL 파싱, 이미지 URL 입력, 공개 인덱싱)
 - Bracket Pack preview mode
 - 최소 UGC 운영 기능 (공개/비공개, 신고, 관리자 takedown)
-- 기본 광고 슬롯 (결과 화면)
+- 광고 적합성 정책 hook (실제 광고 슬롯/provider script는 Growth)
 - 공개 브라켓 SEO 페이지 (SSR, Open Graph, sitemap)
 
 ### Post-MVP Features

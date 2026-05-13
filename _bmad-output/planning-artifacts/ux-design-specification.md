@@ -132,7 +132,7 @@ Dev agents should use this document to understand product UX requirements, then 
 
 ### 1. Broadcast First, Not Dashboard First
 
-스트리머에게 첫 가치는 관리 기능이 아니라 방송 투입이다. 홈과 브라켓 상세 화면의 우선순위는 "어떤 콘텐츠인가", "얼마나 걸리는가", "OBS에 어떻게 넣는가", "시청자 링크는 어디인가" 순서다.
+스트리머에게 첫 가치는 관리 기능이 아니라 방송 투입이다. 홈과 공개 브라켓 플레이 진입 화면의 우선순위는 "어떤 콘텐츠인가", "얼마나 걸리는가", "바로 시작할 수 있는가", "OBS에 어떻게 넣는가", "시청자 링크는 어디인가" 순서다. 별도 Bracket Detail page를 추가해 플레이 전 클릭 수를 늘리지 않는다.
 
 ### 2. Anonymous Until Creation
 
@@ -196,7 +196,7 @@ loading, empty, error, offline, removed, private, rate-limited 상태는 사용�
 | 화면 | 경로/표면 | 주 사용자 | 렌더링 | 목적 |
 |---|---|---|---|---|
 | Home / Browse | `/`, `/categories/:categorySlug` | 시청자, 스트리머 | SSR | Popular Brackets, category card grid, Popular/New category tabs 기반 브라켓 발견 |
-| Matchup play | `/play/:bracketSlug` | 시청자, 스트리머 | CSR 중심 | 1v1 선택, undo/restart, 로컬 저장, 채팅 투표 집계 표시 |
+| Public bracket play entry / Matchup play | `/brackets/:categorySlug/:bracketSlug` | 시청자, 스트리머 | SSR + CSR | 공개 브라켓 SEO 메타데이터, tournament size 선택, 1v1 선택, undo/restart, 로컬 저장, 채팅 투표 집계 표시 |
 | Streamer live mode | Matchup play 내 opt-in 패널 | 스트리머 | CSR | Twitch 채팅 연동 활성화, !A/!B 투표 집계 |
 | Result page | `/results/:resultId` | 시청자, 스트리머 | SSR | 챔피언, 경로, 통계, 공유, 댓글 |
 | Full Community Ranking View | Result 내 modal | 시청자 | Client overlay | 전체 N명 커뮤니티 선택 % 랭킹. 검색, All entrants 탭(MVP). My picks·By group·Biggest upsets(Growth). 무한 스크롤. Insufficient 상태 포함. |
@@ -224,7 +224,7 @@ loading, empty, error, offline, removed, private, rate-limited 상태는 사용�
 
 ```mermaid
 flowchart TD
-  A[Home / category browse] --> B[Bracket detail]
+  A[Home / category browse] --> B[Public bracket play route]
   B --> C{방송에 사용할 만큼 적합한가?}
   C -- No --> A
   C -- Yes --> D[Matchup play 시작 — regular mode]
@@ -277,13 +277,11 @@ flowchart TD
 
 **Required UI states**
 
-- Onboarding: not shown, category selected, dismissed, category list loading
 - Matchup: first load, image loading, keyboard hint, undo available/unavailable, local save success implicit, localStorage unavailable warning
 - Result: image export pending, export failed, share copied, no community stats yet, comments empty, comments disabled on moderated result
 
 **Key UX requirements**
 
-- 첫 방문 온보딩은 플레이를 막는 마케팅 팝업이 아니라 카테고리 선택 shortcut이어야 한다.
 - 모바일 matchup은 두 항목을 상하 또는 swipe-friendly stacked layout으로 제공하되, A/D 키 설명은 데스크톱에서만 강조한다.
 - 결과 화면의 primary CTA는 상황별로 달라진다. 완료 직후에는 "Download image" 또는 "Copy result link", 공유 링크 유입자는 "Play again"을 우선한다.
 

@@ -475,30 +475,18 @@ So that I can find brackets that match my fandom or stream topic quickly.
 **Then** category navigation collapses into a drawer or horizontal category rail
 **And** cards remain readable without overlapping text or clipped controls.
 
-### Story 1.5: First-Visit Interest Onboarding
-
-**Status:** Removed from MVP scope by the 2026-05-13 Home/Browse correct-course decision.
-
-As a product team,
-I want first-visit personalization and the For You rail to remain out of MVP,
-So that discovery stays aligned with the social sharing loop and avoids unnecessary onboarding friction.
-
-**Acceptance Criteria:**
-
-**Given** a visitor first opens the home page
-**When** no prior preference exists
-**Then** no interest onboarding modal appears
-**And** the visitor can browse Popular Brackets and Browse by category without making a preference choice.
-
-**Given** implementation agents work on Epic 1
-**When** they inspect browse requirements
-**Then** they do not add a For You rail, `sodo:interests`, "Personalize" navigation, or `user_preferences` persistence for MVP
-**And** any future personalization work must be handled by a new Growth story.
-
-**Given** category discovery is needed in MVP
-**When** the visitor wants a specific fandom or topic
-**Then** category pages and the K-pop tag filter provide the discovery path
-**And** this path does not require onboarding, login, or local interest storage.
+> **MVP 제외 행동: 첫 방문 관심사 온보딩**
+>
+> 2026-05-13 correct-course 결정으로 MVP 범위에서 제외됨.
+>
+> Epic 1 구현 시 다음을 추가하지 않는다:
+> - 관심사 온보딩 모달 또는 카테고리 선택 팝업
+> - For You 레일
+> - `sodo:interests` 또는 `user_preferences` localStorage 저장
+> - "Personalize" 네비게이션
+>
+> **MVP 대안:** 방문자는 홈 Popular Brackets, 카테고리 탐색, K-pop 태그 필터로 즉시 브라켓을 고른다.  
+> **향후:** 개인화 작업은 반드시 별도 Growth 스토리로 처리한다.
 
 ## Epic 2: Playable Tournament Experience
 
@@ -562,18 +550,24 @@ So that I can play a fair Save One Drop One bracket even when the available entr
 **Then** it includes stable match, round, entry, and bye identifiers sufficient for those future stories
 **And** it does not include UI-only state such as hover, focus, modal, or animation flags.
 
-### Story 2.2: Tournament Size Selection Start Flow
+### Story 2.2: SSR Public Bracket Play Entry and Tournament Size Selection
 
 As a player,
-I want to choose how large a tournament run to play before the first matchup,
-So that I can control the session length without reviewing every entrant.
+I want a public Bracket Pack URL to open directly into the play start experience,
+So that I can begin playing from one click while the page still works for SEO and social previews.
 
 **Acceptance Criteria:**
 
-**Given** a visitor opens `/play/:bracketSlug` for a public Bracket Pack
+**Given** a visitor opens `/brackets/:categorySlug/:bracketSlug` for a public Bracket Pack
 **When** the route loads
 **Then** it fetches the Bracket Pack through the repository and public visibility read policy
+**And** it renders SSR title, meta description, canonical URL, `og:title`, `og:description`, and `og:image` before client hydration
 **And** it does not require authentication to start play.
+
+**Given** the public Bracket Pack route renders
+**When** the visitor arrives from Home, category browse, a shared link, or search
+**Then** the same route presents the tournament size selection/start experience
+**And** no intermediate Bracket Detail page or extra "Start tournament" page is introduced.
 
 **Given** the Bracket Pack has at least four playable entries
 **When** the start flow renders
@@ -609,6 +603,11 @@ So that I can control the session length without reviewing every entrant.
 **When** the start flow loads
 **Then** it shows a short functional unavailable state
 **And** no tournament run is created.
+
+**Given** the public Bracket Pack route returns a response
+**When** cache headers are generated
+**Then** route headers are set through the shared public cache helper
+**And** cache behavior does not bypass the public visibility decision.
 
 **Given** users may be on mobile or keyboard-only desktop
 **When** they interact with the size selection surface
@@ -770,7 +769,7 @@ So that I do not lose progress during a long run.
 **And** the saved state includes schema version, bracketPackId, selected tournament size, seeding mode, active random order/seed when applicable, current round/match position, remaining matches, completed matches, selected entry IDs, and updatedAt.
 
 **Given** the player refreshes the page during an incomplete run
-**When** `/play/:bracketSlug` loads again
+**When** `/brackets/:categorySlug/:bracketSlug` loads again
 **Then** the app detects the incomplete saved state for that Bracket Pack
 **And** it shows a Resume / Restart choice before entering the next matchup.
 
@@ -1949,6 +1948,17 @@ So that I can react to the bracket outcome and keep the debate going.
 **Then** the comment is saved with result/bracket reference, comment body, optional attached champion/result context, createdAt, and moderation status
 **And** no account, email, or personally identifying information is required.
 
+**Given** a viewer has no account
+**When** they submit their first comment from a device
+**Then** the client generates a UUID stored in localStorage (90-day expiry) as `anon_token`
+**And** the server creates a `comment_sessions` record with an auto-generated `display_name` (adjective+noun format) and a fixed `color_hue` (0–360)
+**And** all subsequent comments from the same `anon_token` on any device session reuse the same `display_name` and `color_hue`.
+
+**Given** a viewer has previously commented and returns to a result page
+**When** their `anon_token` exists in localStorage and has not expired
+**Then** their existing `display_name` and `color_hue` are used without re-generation
+**And** replies to their past comments can visually confirm it is the same commenter.
+
 **Given** a comment body is empty, too long, or invalid
 **When** the viewer submits
 **Then** the form shows a field-level validation error
@@ -1964,15 +1974,29 @@ So that I can react to the bracket outcome and keep the debate going.
 **Then** it follows the design reference by showing avatar/fallback, display name or anonymous label, timestamp, message body, optional hot-take badge, optional champion pill, action row, and bracket-match percentage where data exists
 **And** missing optional data does not create broken placeholders.
 
+**Given** a comment has champion context
+**When** the comment list is fetched
+**Then** the loader JOINs `entry_champion_stats` on `(bracket_pack_id, entry_id)` to retrieve `champion_count / total_plays` as `bracket_match_pct`
+**And** this value is displayed as a percentage in the comment row right column (e.g. 94%)
+**And** if `total_plays < 100` or champion context is absent, the percentage is omitted rather than shown as 0%.
+
 **Given** a comment has an attached champion/result context
 **When** the champion pill renders
-**Then** it can link or route to the commenter's public result where available
+**Then** it navigates to the commenter's public result page (`/results/:resultId`) on click where a public result exists
 **And** if no public result is available, the pill is shown as a non-link label.
+**And** side-by-side bracket comparison is explicitly out of scope.
 
 **Given** filter chips are available
 **When** the comments section renders
 **Then** MVP supports `All`, champion-pick filters where data exists, and `Hot takes` if the backend can derive the flag
 **And** unavailable filters are hidden rather than rendered as dead controls.
+
+**Given** a comment is saved with champion context
+**When** the server sets `hot_takes_flag`
+**Then** it queries `entry_champion_stats` for entries where `champion_count > 0` in the bracket pack
+**And** computes the 25th percentile pick rate among those entries (`champion_count / total_plays`)
+**And** sets `hot_takes_flag = true` if the commenter's champion pick rate falls below that P25 value AND the bracket pack has `total_plays >= 100`
+**And** sets `hot_takes_flag = null` (undetermined) if `total_plays < 100`, which causes the Hot takes filter chip to be hidden.
 
 **Given** many comments exist
 **When** the viewer activates "Load more comments"
@@ -1981,8 +2005,11 @@ So that I can react to the bracket outcome and keep the debate going.
 
 **Given** comment voting, replies, and share actions appear in the design reference
 **When** MVP comment rows render
-**Then** these controls may be displayed only if they are backed by working behavior or an explicitly disabled/unavailable state
+**Then** the ↗ Share action is implemented as comment-URL copy-to-clipboard
+**And** the ▲ upvote, ▼ downvote, and 💬 replies controls are omitted from the MVP render entirely — not shown as disabled buttons
 **And** dead buttons that appear functional are not allowed.
+
+**Note (post-MVP):** Upvote/downvote and threaded replies are deferred. The comment row layout must leave room for these controls so they can be added without restructuring the row.
 
 **Given** comments are locked, unavailable, or the result is removed/private
 **When** the comments section renders
@@ -2155,8 +2182,9 @@ So that unsafe content is handled without policy drift across the site.
 
 **Given** ad restriction is applied to a bracket or result
 **When** public pages render
-**Then** ad slots are disabled or marked ineligible for that content
-**And** this state is visible in the admin review UI.
+**Then** the content is marked ad-ineligible for future ad serving
+**And** this state is visible in the admin review UI
+**And** no MVP ad provider script or slot UI is required.
 
 **Given** moderation changes affect cached public pages
 **When** a state transition occurs
@@ -2261,7 +2289,8 @@ So that I understand what I can do next without seeing internal moderation detai
 
 **Given** a public result or bracket is ad restricted
 **When** the page renders
-**Then** ad slots are disabled or marked ineligible for that content
+**Then** the content is marked ad-ineligible for future ad serving
+**And** no MVP ad provider script or slot UI is required
 **And** this public state does not reveal the internal reason for ad restriction.
 
 **Given** a removed or unavailable page is crawled
