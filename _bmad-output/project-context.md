@@ -17,7 +17,7 @@ _AI 에이전트가 이 프로젝트의 코드를 구현할 때 반드시 따라
 |--------|------|
 | 프레임워크 | **React Router 7 (framework mode)** |
 | UI | React + CSS Custom Properties |
-| 스타일 토큰 | `docs/design/colors_and_type.css` |
+| 디자인 기준 | `docs/design/README.md`와 `docs/design/*.html` / `docs/design/**/*.jsx` |
 | DB / Auth / Storage / Realtime | **Supabase** (Postgres, Auth, Storage, Realtime Broadcast) |
 | 백엔드 런타임 / 배포 | **Cloudflare Workers** |
 
@@ -29,21 +29,19 @@ React Router 7 framework mode는 Remix 패턴과 동일하다: `loader` / `actio
 
 ## 디자인 시스템 (단일 진실 출처)
 
-모든 UI 구현은 `docs/design/`을 기준으로 한다. 디자인 토큰을 하드코딩하지 말 것.
+모든 UI 구현은 `docs/design/`을 기준으로 한다. 현재 디자인 산출물은 별도 CSS 토큰 파일이나 `ui_kits/` 디렉터리가 아니라 HTML/JSX 프로토타입이다. 구현자는 `docs/design/README.md`의 파일 맵을 먼저 읽고, 해당 화면의 `.html`과 로드되는 `.jsx` 파일을 직접 확인해야 한다.
 
-### 토큰 참조 방법
+### 디자인 참조 방법
 
-```css
-/* 올바름 */
-background: var(--color-surface-card);
-color: var(--color-accent-primary);
+| 구현 대상 | 먼저 읽을 파일 |
+|----------|----------------|
+| 홈 / 카테고리 / 매치업 / 결과 | `docs/design/Save One Drop One.html`, `docs/design/theme-streamer.jsx`, `docs/design/data.jsx` |
+| 브라켓 생성 | `docs/design/Create Bracket.html`, `docs/design/create-bracket/composer.jsx`, `docs/design/create-bracket/published.jsx`, `docs/design/create-bracket/shared.jsx` |
+| Streamer Live Mode | `docs/design/Live Mode States.html`, `docs/design/live-mode/states.jsx` |
+| 전체 브라켓 모달 | `docs/design/Full Bracket.html`, `docs/design/full-bracket/states.jsx` |
+| 커뮤니티 랭킹 모달 | `docs/design/Community Ranking.html`, `docs/design/community-ranking/states.jsx` |
 
-/* 금지 */
-background: #18181f;
-color: #7c3aed;
-```
-
-토큰 전체 목록: `docs/design/colors_and_type.css`
+프로토타입의 inline style 값은 현재 시각 기준이다. Production 구현에서는 반복되는 색상, 타이포그래피, spacing을 `app/styles/tokens.css` 같은 앱 내부 토큰 엔트리로 추출하되, 값과 컴포넌트 구성은 위 디자인 파일에서 직접 파생한다.
 
 ### 핵심 토큰 값 (참고용, 코드엔 var() 사용)
 
@@ -58,17 +56,15 @@ color: #7c3aed;
 
 ### 구현 가능한 React 컴포넌트
 
-`docs/design/ui_kits/streamer-native/` 에 pixel-perfect 기준 컴포넌트가 있다. 새 화면을 구현할 때 반드시 먼저 읽을 것:
+디자인 프로토타입의 컴포넌트는 전역 `window.*`로 export된다. Production으로 옮길 때는 canvas/tweaks 전용 코드는 제외하고, 실제 화면 컴포넌트만 앱 구조에 맞게 추출한다.
 
-| 컴포넌트 | 파일 |
+| 컴포넌트/화면 | 파일 |
 |----------|------|
-| 홈 화면 | `HomeScreen.jsx` |
-| 매치업 (1v1) | `MatchupScreen.jsx` |
-| 결과 화면 | `ResultScreen.jsx` |
-| 상단 네비 | `TopNav.jsx` |
-| 사이드바 | `Sidebar.jsx` |
-| 브라켓 카드 | `BracketCard.jsx` |
-| 채팅 패널 | `ChatPanel.jsx` |
+| 홈 / 카테고리 / 매치업 / 결과 / 상단 네비 / 사이드바 / 브라켓 카드 / 채팅 패널 | `docs/design/theme-streamer.jsx` |
+| 생성 Composer / Published 상태 | `docs/design/create-bracket/composer.jsx`, `docs/design/create-bracket/published.jsx`, `docs/design/create-bracket/shared.jsx` |
+| Live Mode 상태 | `docs/design/live-mode/states.jsx` |
+| 전체 브라켓 모달 상태 | `docs/design/full-bracket/states.jsx` |
+| 커뮤니티 랭킹 모달 상태 | `docs/design/community-ranking/states.jsx` |
 
 ### 타이포그래피 규칙
 
@@ -108,7 +104,7 @@ color: #7c3aed;
 | 홈 / 탐색 | SSR | SEO 필요 |
 | 공개 결과 페이지 | **SSR 필수** | OG 이미지·메타태그 포함 (FR33) — 공유 링크 클릭 시 SNS 미리보기 동작해야 함 |
 | 매치업 (플레이 중) | CSR | 실시간 인터랙션 |
-| OBS 브라우저 소스 | CSR | 방송 레이아웃 |
+| Streamer Live Mode | CSR | 방송용 screen capture 대상 |
 
 공유 결과 URL은 반드시 SSR로 렌더링해야 한다. 크롤러가 읽을 수 없으면 바이럴 루프 전체가 깨진다.
 
@@ -123,12 +119,12 @@ color: #7c3aed;
 
 ---
 
-## OBS 브라우저 소스 통합
+## Streamer Live Mode / OBS Screen Capture
 
-- 스트리머는 단일 URL을 OBS에 추가하는 것으로 방송 통합 완료 (FR40)
-- OBS 방송 모드: 16:9 레이아웃 최적화, 키보드(A/D)로 로컬 조작 → 방송에 실시간 반영 (FR41)
-- OBS 모드와 일반 플레이 모드는 **동일한 URL, 다른 레이아웃** — `?obs=1` 쿼리 파라미터 또는 별도 경로로 구분
-- OBS 브라우저 소스는 Supabase Realtime Broadcast 채널(`live-session:{session_id}`)을 구독해 투표 집계를 실시간으로 표시한다
+- 스트리머는 일반 매치업 화면에서 Streamer Live Mode를 켜고, 그 화면을 OBS screen capture로 방송에 올린다.
+- 별도 OBS Browser Source URL, `?obs=1`, 별도 OBS route를 만들지 않는다.
+- Live Mode는 같은 매치업 URL 안의 opt-in 패널이며, 16:9 화면 캡처에서 잘림 없이 보여야 한다.
+- Streamer Live Mode 클라이언트는 Supabase Realtime Broadcast 채널(`live-session:{session_id}`)을 구독해 투표 집계를 실시간으로 표시한다.
 
 ---
 

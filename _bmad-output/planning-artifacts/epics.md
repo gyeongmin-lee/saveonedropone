@@ -112,7 +112,7 @@ NFR-M3: Growth 단계부터 lint와 type check 실패 시 production 배포가 �
 - 공개 route flow는 repository fetch -> visibility policy -> metadata helper -> route headers -> render 순서를 따라야 한다.
 - visibility, SEO metadata, slug, cache, ad eligibility, moderation state 판단은 shared helper/policy로 중앙화해야 하며 route마다 hand-roll하지 않는다.
 - 공개 브라켓/category/result 페이지는 SSR metadata와 CDN cache headers를 제공해야 한다. 비공개/takedown 전환 시 noindex, ad eligibility, cache behavior가 함께 반영되어야 한다.
-- design token source of truth는 `docs/design/colors_and_type.css`이며 production UI는 hardcoded brand color를 사용하지 않는다. `app/styles/tokens.css`는 이 파일에서 파생되어야 한다.
+- design source of truth는 `docs/design/README.md`와 현재 `docs/design` HTML/JSX 프로토타입이다. production UI는 이 참조에서 앱 내부 토큰(`app/styles/tokens.css` 등)을 추출해야 하며, 별도 하드코딩 색상 체계를 만들지 않는다.
 - 익명 in-progress play state는 versioned localStorage key `sodo:play:{bracketPackId}`에 저장한다. 서버에는 완료된 shareable results, aggregate stats, broadcast checkpoints만 저장한다.
 - tournament engine, byes, undo/restart, result reconstruction은 순수 domain module로 구현하고 unit test를 둔다.
 - Result image export는 MVP에서 client-side Canvas 방식으로 구현한다. server-generated result image route는 별도 승인 전에는 추가하지 않는다.
@@ -176,7 +176,7 @@ UX-DR38: Normal text는 4.5:1, large display text는 3:1 대비를 목표로 하
 UX-DR39: Touch targets는 mobile/tablet에서 최소 44x44px이어야 하며 nested controls가 accidental selection을 유발하지 않아야 한다.
 UX-DR40: Motion은 prefers-reduced-motion을 존중하고 필수 정보를 animation만으로 전달하지 않아야 한다.
 UX-DR41: Loading, empty, error, offline, removed, private, rate-limited 상태 copy는 짧고 기능적이어야 하며 사용자의 다음 행동을 명확히 해야 한다.
-UX-DR42: Implementation agents는 화면 구현 전 관련 `docs/design` 및 Streamer Native UI kit 파일을 읽고 visual hierarchy, spacing, typography, color, component composition을 그쪽에서 가져와야 한다.
+UX-DR42: Implementation agents는 화면 구현 전 `docs/design/README.md`와 관련 `docs/design` HTML/JSX 파일을 직접 읽고 visual hierarchy, spacing, typography, color, component composition을 그쪽에서 가져와야 한다.
 
 ### FR Coverage Map
 
@@ -302,7 +302,7 @@ So that all later product stories build on the correct framework, runtime, and p
 
 **Given** the UI must use the existing design system
 **When** base styles are wired
-**Then** the app has a token entry derived from or importing `docs/design/colors_and_type.css`
+**Then** the app has a production token entry derived from the current `docs/design` HTML/JSX references
 **And** scaffold/default styling does not become a competing brand token source.
 
 **Given** later stories need Supabase and other service configuration
@@ -408,7 +408,7 @@ So that I can quickly choose something to play or use on stream without logging 
 
 **Given** the implementation uses project visual rules
 **When** Home/Browse UI is built
-**Then** it imports or derives styles from `docs/design/colors_and_type.css` and relevant `docs/design` Streamer Native references
+**Then** it derives styles and component structure from the relevant `docs/design` HTML/JSX references
 **And** it does not hardcode brand colors in component code.
 
 ### Story 1.4: Category and Tag Browse Routes

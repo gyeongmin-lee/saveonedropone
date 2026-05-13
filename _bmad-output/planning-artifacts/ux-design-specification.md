@@ -5,8 +5,18 @@ inputDocuments:
   - "_bmad-output/planning-artifacts/architecture.md"
   - "_bmad-output/project-context.md"
   - "docs/design/README.md"
-  - "docs/design/SKILL.md"
-  - "docs/design/ui_kits/streamer-native/README.md"
+  - "docs/design/Save One Drop One.html"
+  - "docs/design/theme-streamer.jsx"
+  - "docs/design/data.jsx"
+  - "docs/design/Create Bracket.html"
+  - "docs/design/create-bracket/composer.jsx"
+  - "docs/design/create-bracket/published.jsx"
+  - "docs/design/Live Mode States.html"
+  - "docs/design/live-mode/states.jsx"
+  - "docs/design/Full Bracket.html"
+  - "docs/design/full-bracket/states.jsx"
+  - "docs/design/Community Ranking.html"
+  - "docs/design/community-ranking/states.jsx"
 workflowType: "ux-design"
 project_name: "saveonedropone"
 user_name: "GM"
@@ -43,7 +53,7 @@ Save One Drop One은 스트리머가 준비 없이 방송에 올릴 수 있는 1
 
 - Twitch/YouTube 미드티어 스트리머
 - 목표: 10분 이내 방송 콘텐츠 준비, OBS에서 깨지지 않는 진행, 채팅 참여 유도
-- 주요 디바이스: 데스크톱, OBS 브라우저 소스, 방송 중 키보드 조작
+- 주요 디바이스: 데스크톱, OBS screen capture 대상 화면, 방송 중 키보드 조작
 
 **시청자**
 

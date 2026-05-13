@@ -9,8 +9,18 @@ inputDocuments:
   - "_bmad-output/planning-artifacts/prd-validation-report.md"
   - "_bmad-output/project-context.md"
   - "docs/design/README.md"
-  - "docs/design/SKILL.md"
-  - "docs/design/ui_kits/streamer-native/README.md"
+  - "docs/design/Save One Drop One.html"
+  - "docs/design/theme-streamer.jsx"
+  - "docs/design/data.jsx"
+  - "docs/design/Create Bracket.html"
+  - "docs/design/create-bracket/composer.jsx"
+  - "docs/design/create-bracket/published.jsx"
+  - "docs/design/Live Mode States.html"
+  - "docs/design/live-mode/states.jsx"
+  - "docs/design/Full Bracket.html"
+  - "docs/design/full-bracket/states.jsx"
+  - "docs/design/Community Ranking.html"
+  - "docs/design/community-ranking/states.jsx"
 workflowType: 'architecture'
 project_name: 'saveonedropone'
 user_name: 'GM'
@@ -42,7 +52,7 @@ Implementation agents MUST read this brief before using the rest of this archite
 - Keep anonymous in-progress play local-first with versioned localStorage state.
 - Public bracket/result/category pages must render SEO metadata and OG metadata server-side.
 - Public visibility must be decided before metadata, cache headers, ad eligibility, and rendering.
-- Use `docs/design/colors_and_type.css` as the design token source; do not hardcode brand colors.
+- Use `docs/design/README.md` plus the relevant `docs/design/*.html` and `docs/design/**/*.jsx` files as the visual source of truth. Production tokens should be extracted into app code from those references; do not invent or fork brand colors.
 
 ### Where Code Belongs
 
@@ -78,7 +88,7 @@ Use this document in this order:
 
 1. Scaffold Cloudflare React Router app.
 2. Add route registration through `app/routes.ts`.
-3. Add design token entry derived from `docs/design/colors_and_type.css`.
+3. Add a production design token entry derived from the current `docs/design` HTML/JSX references.
 4. Add Supabase environment contract and server-only client boundary.
 5. Create base folders: `domain/`, `repositories/`, `services/`, `schemas/`, `features/`, `components/`.
 6. Implement pure tournament/domain logic before wiring routes.
@@ -111,7 +121,7 @@ MVP는 단순 게임 UI가 아니라 `Bracket Pack`이라는 콘텐츠 단위를
 - 공개 브라켓/결과 페이지는 크롤러가 초기 HTML에서 title, description, canonical, OG 태그를 읽을 수 있어야 한다.
 - 공개 브라켓 페이지와 결과 페이지는 SSR 또는 정적 응답 계층을 통해 SEO와 캐시 효율을 확보해야 한다.
 - 매치업 전환은 빠른 클라이언트 인터랙션이 필요하며, 선택 후 다음 매치 전환 목표는 300ms 수준이다.
-- OBS 브라우저 소스는 초기 로드 3초 이내, 키 입력 후 화면 반영 p95 100ms 이하를 목표로 한다.
+- Streamer Live Mode screen-capture 대상 화면은 초기 로드 3초 이내, 키 입력 후 화면 반영 p95 100ms 이하를 목표로 한다.
 - 결과 이미지 생성은 64강 기준 p95 3초 이하로 다운로드 준비가 가능해야 한다.
 - MVP는 동시 접속 1,000명 기준 핵심 플레이·결과 공유 플로우를 유지해야 하며, Growth에서는 10,000명 확장 경로를 문서화해야 한다.
 - 인기 공개 페이지는 캐시 가능한 응답으로 origin 부하를 제한해야 한다.
@@ -144,15 +154,15 @@ MVP는 단순 게임 UI가 아니라 `Bracket Pack`이라는 콘텐츠 단위를
 - React Router 7 framework mode is the selected web framework pattern.
 - Next.js must not be used or proposed.
 - Public browse/result pages require SSR or static generation behavior for SEO and social previews.
-- Matchup/play and OBS surfaces are primarily CSR/interactivity-heavy.
+- Matchup/play and Streamer Live Mode surfaces are primarily CSR/interactivity-heavy.
 - Public result URLs must render OG metadata server-side because social crawlers must see previews without client JavaScript.
 - Player bracket progress is stored locally for anonymous users and must survive refresh.
 - Bracket creation requires authentication; browse, play, comments, and result sharing do not.
 - Supported social login providers are Google and Twitch.
 - YouTube URL metadata extraction requires quota/error handling and manual fallback.
 - External image URLs have CORS, hotlinking, expiry, and reliability risks; important curated assets should be proxied/cached or stored.
-- OBS browser source targets Chromium behavior and 1920x1080 layout stability.
-- Design implementation should follow `docs/design/` tokens and Streamer Native UI kit conventions.
+- Streamer Live Mode targets 1920x1080 OBS screen capture layout stability.
+- Design implementation should follow `docs/design/README.md` and the relevant `docs/design` HTML/JSX prototypes directly.
 
 ### Cross-Cutting Concerns Identified
 
@@ -268,7 +278,7 @@ Use the official React Router default template as the implementation foundation.
 
 This is the conservative choice because the project already mandates React Router 7 framework mode and forbids Next.js. The default template gives the required SSR-capable framework structure without prematurely choosing database, auth, realtime, storage, or deployment vendors. Those decisions should be made explicitly in later architecture steps because they materially affect UGC moderation, media handling, live voting, OBS stability, SEO caching, and operating cost.
 
-The first implementation story should initialize from the official default template, then replace or constrain styling to use the existing `docs/design/` CSS custom properties and Streamer Native UI kit conventions.
+The first implementation story should initialize from the official default template, then replace or constrain styling to match the current `docs/design` HTML/JSX prototypes and production tokens derived from them.
 
 **Initialization Command:**
 
@@ -288,8 +298,8 @@ If initializing inside the existing repository rather than creating a nested pro
 
 **Styling Solution:**
 - Default template includes TailwindCSS
-- Project-specific rule: production UI must use `docs/design/colors_and_type.css` CSS custom properties as design tokens
-- Tailwind may be retained only as layout utility support if it does not replace or fork the design-token source of truth
+- Project-specific rule: production UI must derive reusable tokens and component structure from the current `docs/design` HTML/JSX prototypes.
+- Tailwind may be retained only as layout utility support if it does not replace or fork the design source of truth.
 
 **Build Tooling:**
 - Vite-based React Router framework tooling
@@ -454,7 +464,7 @@ Component architecture:
 - Route components compose feature components.
 - Domain logic lives in `app/domain/*` or equivalent, outside UI components.
 - Tournament engine is pure TypeScript and unit-tested.
-- Design tokens come from `docs/design/colors_and_type.css`; do not fork color/type values into ad hoc constants.
+- Production design tokens should be extracted from the current `docs/design` HTML/JSX references; do not fork color/type values into unrelated ad hoc constants.
 
 Rendering strategy:
 - Home/browse/category/public bracket/result pages: SSR.
@@ -694,7 +704,7 @@ All implementation agents MUST follow these rules:
 6. Use shared visibility and metadata helpers for public pages.
 7. Treat realtime messages as transient; persist durable session checkpoints separately.
 8. Keep anonymous in-progress play state local-first with a schema version.
-9. Use design tokens from `docs/design/colors_and_type.css`; do not hardcode brand colors.
+9. Derive design tokens from the current `docs/design` HTML/JSX references; do not hardcode unrelated brand colors.
 10. Check Cloudflare Workers compatibility before adding server-side packages.
 11. Route high-risk writes through a shared rate-limit helper.
 12. Do not expose service-role credentials or admin-only policy details to browser code.
@@ -984,7 +994,7 @@ type LocalPlayState = {
 - Use React Router framework mode; do not introduce Next.js.
 - Keep domain logic outside route components.
 - Keep Supabase access behind repository/service boundaries.
-- Use `docs/design/colors_and_type.css` tokens; do not hardcode brand colors.
+- Use tokens derived from the current `docs/design` HTML/JSX references; do not hardcode unrelated brand colors.
 - Treat Supabase Realtime as transient coordination, not source of truth.
 - Keep anonymous in-progress play local-first.
 - Use the shared visibility policy for public content.
@@ -1202,7 +1212,7 @@ saveonedropone/
 - Generated Supabase types live in `app/types/database.types.ts`.
 - Domain model types live with their owning domain modules.
 - Supabase migrations include schema, indexes, RLS policies, and required seed data unless the Supabase CLI structure requires separate files.
-- `app/styles/tokens.css` is the production token entry and must derive from `docs/design/colors_and_type.css`.
+- `app/styles/tokens.css` is the production token entry and must derive from the current `docs/design` HTML/JSX references.
 - `features/auth/` contains auth UI; session/OAuth provider logic belongs in `services/auth.server.ts`.
 - No server-generated result image route is included in the initial structure. MVP result pages use fallback/static OG assets unless a later story explicitly adds a lightweight route.
 
@@ -1560,7 +1570,7 @@ npm create cloudflare@latest -- saveonedropone --framework=react-router
 Then align the generated project to this architecture:
 - configured routes via `app/routes.ts`
 - Cloudflare Workers deployment config
-- design token entry from `docs/design/colors_and_type.css`
+- design token entry derived from the current `docs/design` HTML/JSX references
 - Supabase environment contract
 - PostHog observability/analytics setup
 - base folders for `domain/`, `repositories/`, `services/`, `schemas/`, `features/`, and shared `components/`

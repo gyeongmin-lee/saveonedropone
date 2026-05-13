@@ -120,13 +120,13 @@ Save One Drop One은 한국의 이상형 월드컵 포맷을 서구권 스트리
 
 ### MVP — Minimum Viable Product
 
-- 방송-ready Bracket Pack 100개 이상 (K-팝·애니 우선, 게임·스포츠 확장 검증): 제목, 썸네일, 참가 항목, OBS 레이아웃, 공유 링크 포함
+- 방송-ready Bracket Pack 100개 이상 (K-팝·애니 우선, 게임·스포츠 확장 검증): 제목, 썸네일, 참가 항목, Streamer Live Mode screen-capture 레이아웃, 공유 링크 포함
 - 홈 탐색: "Popular Brackets" 섹션과 "Browse by category" 5x2 카드 그리드. 홈은 개인화 없이 cross-category 발견을 제공한다.
 - 카테고리 내 탐색: Popular/New 2탭과 태그 필터. MVP 태그 필터는 K-pop에서만 활성화하고, 태그 없는 카테고리는 필터 바를 렌더링하지 않는다.
 - 1v1 토너먼트 플레이 UI (방송 최적화, 모바일 대응)
 - 비정규 참가자 수 지원 및 부전승 시스템: 참가자가 정확히 16/32/64/128명이 아니어도 브라켓 생성 가능
 - 진행 상황 로컬 저장: 새로고침 후에도 진행 상태 유지, 미완료 브라켓 복귀 시 이어하기 선택 제공
-- OBS 브라우저 소스 호환 방송 레이아웃
+- Streamer Live Mode screen-capture 방송 레이아웃
 - 결과 브라켓 트리 이미지 내보내기 (Twitter/Reddit/Discord 공유 최적화)
 - 결과 화면 플레이 통계: 총 소요 시간, 선택 경로, 커뮤니티 집계 결과 표시
 - Twitch 채팅 !A/!B 명령어 기반 실시간 투표 집계 (채팅 명령어가 유일한 시청자 참여 방식; 별도 웹 투표 링크 없음; 스트리머가 Twitch OAuth `channel:bot` scope 동의를 완료해야 채널 연동 활성화; YouTube 채팅은 Growth)
@@ -276,8 +276,8 @@ Save One Drop One은 한국의 이상형 월드컵 포맷을 서구권 스트리
 - 중요 항목 이미지는 자체 스토리지에 프록시·캐싱 권장 (특히 큐레이션 Bracket Pack)
 - YouTube oEmbed/Data API 쿼터 관리: 항목 생성 시 API 호출 빈도 제한 처리
 
-**방송 안정성 (OBS)**
-- OBS 브라우저 소스는 복잡한 JS 로딩에 민감 — 방송 레이아웃 페이지는 경량화 필수
+**방송 안정성 (OBS screen capture)**
+- Streamer Live Mode는 방송 중 캡처되는 화면이므로 1920×1080에서 경량·안정적으로 렌더링되어야 한다
 - 방송 중 네트워크 단절 시 라운드 상태 복구(round state persistence) 고려
 
 ### Risk Mitigations
@@ -300,11 +300,11 @@ Save One Drop One은 한국의 이상형 월드컵 포맷을 서구권 스트리
 
 **2. 제품 단위 혁신: 도구 → 콘텐츠 단위**
 
-기존 경쟁사(TierMaker, BracketFights)는 "도구"를 제공한다. Save One Drop One은 **Bracket Pack이라는 콘텐츠 단위**를 제공한다. 제목, 썸네일, OBS 레이아웃, 공유 메타데이터가 하나로 묶인 방송-ready 패키지는 스트리머의 준비 시간을 제거한다. "켜면 방송이 시작되는 콘텐츠 단위"는 스트리머 도구 시장에서 새로운 제품 범주를 정의한다.
+기존 경쟁사(TierMaker, BracketFights)는 "도구"를 제공한다. Save One Drop One은 **Bracket Pack이라는 콘텐츠 단위**를 제공한다. 제목, 썸네일, Streamer Live Mode 레이아웃, 공유 메타데이터가 하나로 묶인 방송-ready 패키지는 스트리머의 준비 시간을 제거한다. "켜면 방송이 시작되는 콘텐츠 단위"는 스트리머 도구 시장에서 새로운 제품 범주를 정의한다.
 
 **3. 채널 혁신: 브라켓 + 방송 워크플로우의 결합**
 
-브라켓 도구와 방송 워크플로우 최적화(OBS 브라우저 소스)를 결합한 제품은 서구권에 존재하지 않다. 스트리머가 방송 중 브라켓을 진행하면 시청자가 Twitch 채팅 명령어(!A/!B)로 직접 투표하고, 방송 후 같은 브라켓을 재플레이하는 "방송-재생산" 루프는 어떤 기존 제품도 완성하지 못한 인터랙션 패턴이다. 채팅창을 떠나지 않고 투표하는 방식은 방송 몰입을 유지하며 참여율을 높인다.
+브라켓 도구와 OBS screen capture에 최적화된 Streamer Live Mode를 결합한 제품은 서구권에 존재하지 않다. 스트리머가 방송 중 브라켓을 진행하면 시청자가 Twitch 채팅 명령어(!A/!B)로 직접 투표하고, 방송 후 같은 브라켓을 재플레이하는 "방송-재생산" 루프는 어떤 기존 제품도 완성하지 못한 인터랙션 패턴이다. 채팅창을 떠나지 않고 투표하는 방식은 방송 몰입을 유지하며 참여율을 높인다.
 
 **4. 성장 루프 혁신: 스트리머-시청자-UGC-SEO 복합 플라이휠**
 
@@ -429,7 +429,7 @@ Save One Drop One은 React Router 7 framework mode 기반의 SSR/SSG 하이브�
 - 카테고리 Popular/New 탭과 K-pop 태그 필터
 - 1v1 토너먼트 플레이 UI (방송 최적화, 모바일 대응)
 - 진행 상황 로컬 저장 및 미완료 브라켓 이어하기
-- OBS 브라우저 소스 호환 방송 레이아웃 (1920×1080)
+- Streamer Live Mode screen-capture 방송 레이아웃 (1920×1080)
 - 결과 브라켓 트리 이미지 내보내기 (SNS 공유 최적화)
 - 결과 화면 플레이 통계 및 커뮤니티 집계 결과
 - 공개 결과 페이지 댓글
