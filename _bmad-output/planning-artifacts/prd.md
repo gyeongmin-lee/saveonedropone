@@ -13,7 +13,7 @@ researchCount: 1
 brainstormingCount: 1
 projectDocsCount: 0
 workflowType: 'prd'
-lastEdited: "2026-05-09"
+lastEdited: "2026-05-13"
 editHistory:
   - date: "2026-05-06"
     changes: "Validation-guided edit: clarified success metrics, aligned MVP scope and FR traceability, retained MVP comments, and rewrote NFRs with measurable acceptance criteria."
@@ -21,6 +21,8 @@ editHistory:
     changes: "Validation-guided cleanup: clarified result comparison as Growth scope, aligned web framework guidance with project context, and tightened minor measurability wording."
   - date: "2026-05-09"
     changes: "Direction update: removed OBS Browser Source URL concept (FR17, FR25, NFR-P3, Browser Matrix, Journey 1, Responsive Design, Risk). Replaced with OBS screen capture via Streamer Live Mode. Realtime requirements updated to Twitch EventSub + Supabase Realtime Broadcast."
+  - date: "2026-05-13"
+    changes: "Correct-course update: aligned Home/Browse with Option C design, removed first-visit personalization/For You from MVP, replaced Featured home scope with Popular Brackets plus category cards, and tightened category/result re-entry requirements."
 classification:
   projectType: web_app
   domain: entertainment_creator_tools
@@ -119,9 +121,8 @@ Save One Drop One은 한국의 이상형 월드컵 포맷을 서구권 스트리
 ### MVP — Minimum Viable Product
 
 - 방송-ready Bracket Pack 100개 이상 (K-팝·애니 우선, 게임·스포츠 확장 검증): 제목, 썸네일, 참가 항목, OBS 레이아웃, 공유 링크 포함
-- 첫 방문자 관심사 온보딩 팝업: 카테고리 선택 → 모달 종료 후 홈 피드 상단에 "For you" 레일 in-place 추가 (별도 페이지 이동 없음, 계정 불필요)
-- 온보딩 카테고리 10개: K-pop / Anime & manga / Gaming / Movies & TV / Sports / Music / Internet & memes / Food / Tech / Books
-- 카테고리 내 세부 태그 탐색: 예) 카테고리 `게임` → 태그 `브롤스타즈`, `리그 오브 레전드`, `마인크래프트`
+- 홈 탐색: "Popular Brackets" 섹션과 "Browse by category" 5x2 카드 그리드. 홈은 개인화 없이 cross-category 발견을 제공한다.
+- 카테고리 내 탐색: Popular/New 2탭과 태그 필터. MVP 태그 필터는 K-pop에서만 활성화하고, 태그 없는 카테고리는 필터 바를 렌더링하지 않는다.
 - 1v1 토너먼트 플레이 UI (방송 최적화, 모바일 대응)
 - 비정규 참가자 수 지원 및 부전승 시스템: 참가자가 정확히 16/32/64/128명이 아니어도 브라켓 생성 가능
 - 진행 상황 로컬 저장: 새로고침 후에도 진행 상태 유지, 미완료 브라켓 복귀 시 이어하기 선택 제공
@@ -140,6 +141,7 @@ Save One Drop One은 한국의 이상형 월드컵 포맷을 서구권 스트리
 
 ### Growth Features (Post-MVP)
 
+- 개인화 탐색/For You/관심사 온보딩 — MVP 바이럴 루프 검증 이후 재평가
 - 결과 비교 화면 (두 사용자 결과 나란히) — 바이럴 루프 검증 후 효과 재평가
 - YouTube 채팅 !A/!B 연동 (Twitch 채팅 연동 안정화 이후; Cloudflare Workers의 gRPC streamList 호환성 검증 선행 필요)
 - 즐겨찾기, 플레이 히스토리, 저장된 브라켓 재방문 흐름
@@ -181,13 +183,13 @@ Save One Drop One은 한국의 이상형 월드컵 포맷을 서구권 스트리
 
 *Opening Scene:* Jin은 Maya의 방송 VOD를 다음 날 보다가 "이거 나도 해보고 싶다"는 생각이 든다. 채팅에서 스트리머가 공유한 링크를 찾아 클릭한다.
 
-*Rising Action:* 처음 사이트에 들어오자 팝업이 뜬다. "What's your scene?" — K-pop을 선택하고 "Save & explore →"를 누르자 모달이 닫히며 홈 피드 상단에 "For you" 레일이 나타난다. K-pop 브라켓이 핀되어 있다. "4세대 걸그룹 멤버 64강"을 클릭해 플레이 시작. 계정 없이 바로 된다.
+*Rising Action:* 공유 링크는 Jin을 해당 브라켓 또는 결과 화면으로 바로 보낸다. 별도 온보딩 없이 "Play again" 또는 같은 카테고리의 "More in K-pop" 레일을 통해 다음 브라켓을 고른다. K-pop 카테고리 페이지에서는 Popular/New 탭과 K-pop 태그 필터로 원하는 브라켓을 빠르게 좁힐 수 있다. 계정 없이 바로 된다.
 
 *Climax:* 64강을 완주한다. 최종 1위가 나오는 순간 — Maya와 다른 결과다. 결과 이미지를 저장해 디코 친구들한테 올린다.
 
 *Resolution:* 친구 셋이 공유 결과 링크를 타고 들어와 Jin의 우승자와 선택 경로를 확인한다. 한 명은 댓글로 "이 선택은 말이 안 된다"고 남기고, 나머지는 Play again 버튼으로 각자 플레이한다. 서로 결과가 다 다르다. Jin은 다음 날 애니 카테고리도 해본다.
 
-**요구 기능:** 첫 방문 온보딩 팝업(카테고리 선택 → 즉시 브라켓 진입), 익명 플레이, 결과 이미지 내보내기(Discord/SNS 최적화), 스트리머 공유 링크 → 동일 브라켓 직접 연결, 공유 결과 링크 직접 진입, 공개 결과 댓글, Play again 재진입
+**요구 기능:** 공유 링크 직접 진입, 익명 플레이, 결과 이미지 내보내기(Discord/SNS 최적화), 결과 화면 상단 근처 "More in [category]" 레일, Play again 재진입, 공개 결과 댓글
 
 ---
 
@@ -228,7 +230,7 @@ Save One Drop One은 한국의 이상형 월드컵 포맷을 서구권 스트리
 | 기능 영역 | 스트리머 | 시청자 | UGC 제작자 | 운영자 |
 |----------|---------|--------|------------|--------|
 | 큐레이션 브라켓 라이브러리 | ★★★ | ★★ | — | — |
-| 온보딩 팝업 (카테고리 선택) | — | ★★★ | — | — |
+| 홈/카테고리 탐색 | ★★ | ★★★ | ★ | — |
 | 방송 화면 공유 최적화 | ★★★ | — | — | — |
 | 익명 플레이 | — | ★★★ | — | — |
 | 결과 이미지 내보내기 | ★★★ | ★★★ | — | — |
@@ -380,8 +382,8 @@ Save One Drop One은 React Router 7 framework mode 기반의 SSR/SSG 하이브�
 
 - 모든 공개 브라켓 페이지: 고유 `<title>`, `<meta description>`, Open Graph 태그, canonical URL 필수
 - URL 구조: `/brackets/[category]/[slug]` — 카테고리 taxonomy가 URL에 반영
-- 카테고리 페이지(`/kpop`, `/anime`, `/sports` 등): 독립 SEO 랜딩 페이지로 운영
-- 결과 공유 페이지: Open Graph 이미지(브라켓 트리 이미지) 포함 — 소셜 미리보기 최적화
+- 카테고리 페이지(`/categories/[categorySlug]`): 독립 SEO 랜딩 페이지로 운영
+- 결과 공유 페이지: 챔피언 이미지 또는 fallback OG 이미지를 포함하고, `og:title`은 `[Champion] wins [Bracket Pack]!`, `og:description`은 플레이 수 기반 문구로 생성한다
 - 비공개 전환 브라켓: `noindex` 즉시 적용
 - Sitemap 자동 생성: 공개 브라켓 페이지 포함
 
@@ -417,13 +419,14 @@ Save One Drop One은 React Router 7 framework mode 기반의 SSR/SSG 하이브�
 
 **지원되는 핵심 사용자 여정:**
 - Journey 1: 스트리머 — 방송-ready Bracket Pack 선택 → OBS 투입 → 결과 공유
-- Journey 2: 시청자 — 온보딩 팝업 → 익명 플레이 → 결과 이미지 공유
+- Journey 2: 시청자 — 공유 링크 또는 카테고리 탐색 → 익명 플레이 → 결과 이미지 공유
 - Journey 3: UGC 제작자 — YouTube/이미지 URL로 브라켓 생성 → 공개 인덱싱
 - Journey 4: 운영자 — 신고 수신 → 비공개 처리 → 재심
 
 **Must-Have 기능:**
 - 큐레이션 Bracket Pack 100개 이상 (K-팝·애니 우선)
-- 첫 방문자 관심사 온보딩 팝업 (카테고리 선택 → 홈 피드 "For you" 레일 in-place 추가)
+- 홈 Popular Brackets와 Browse by category 카드 그리드
+- 카테고리 Popular/New 탭과 K-pop 태그 필터
 - 1v1 토너먼트 플레이 UI (방송 최적화, 모바일 대응)
 - 진행 상황 로컬 저장 및 미완료 브라켓 이어하기
 - OBS 브라우저 소스 호환 방송 레이아웃 (1920×1080)
@@ -496,11 +499,11 @@ Save One Drop One은 React Router 7 framework mode 기반의 SSR/SSG 하이브�
 | FR | 설명 | Phase |
 |----|------|-------|
 | FR1 | 방문자는 로그인 없이 공개 브라켓을 탐색하고 플레이할 수 있다 | MVP |
-| FR2 | 홈 화면은 주간 Featured 브라켓과 트렌딩 브라켓 목록을 표시한다 | MVP |
+| FR2 | 홈 화면은 "Popular Brackets" 섹션과 "Browse by category" 5x2 카드 그리드를 표시한다. Popular Brackets는 cross-category `trending_score` 기반으로 정렬하되 Cold Start에서는 curated 우선 정렬을 사용하고, 동일 카테고리는 최대 3개까지만 노출한다 | MVP |
 | FR3 | 브라켓 카드에는 총 플레이 횟수와 현재 라이브 방송 중인 스트리머 수가 표시된다 | MVP |
 | FR4 | 방문자는 현재 Save One Drop One을 방송 중인 스트리머 목록을 사이드바에서 확인할 수 있다 | Growth |
 | FR5 | 방문자는 카테고리(K-팝, 애니메이션, 게임, 스포츠 등)로 브라켓을 필터링할 수 있다 | MVP |
-| FR5a | 방문자는 카테고리 내 세부 태그로 브라켓을 추가 필터링할 수 있다 (예: 카테고리 `게임` → 태그 `브롤스타즈`) | MVP |
+| FR5a | 방문자는 카테고리 내 세부 태그로 브라켓을 추가 필터링할 수 있다. MVP에서는 K-pop 카테고리에만 태그 필터를 제공하며, 태그 선택은 전체 페이지 리로드 없이 그리드 영역을 서버 fetch + skeleton UI로 갱신하고 URL 쿼리에 반영한다 | MVP |
 | FR6 | 방문자는 브라켓 제목 및 설명으로 검색할 수 있다 | Growth |
 | FR7 | 사용자는 브라켓을 즐겨찾기(♡)에 추가할 수 있다 (로그인 필요) | Growth |
 
@@ -526,7 +529,7 @@ Save One Drop One은 React Router 7 framework mode 기반의 SSR/SSG 하이브�
 
 | FR | 설명 | Phase |
 |----|------|-------|
-| FR18 | 플레이어는 브라켓 시작 시 전체 참가자 목록을 확인할 수 있다 | MVP |
+| FR18 | 플레이어는 브라켓 시작 시 플레이할 총 라운드/브라켓 크기를 선택할 수 있다 (예: 4/8/16/32/64/128/256/2NN) | MVP |
 | FR19 | 플레이어는 매 라운드에서 두 항목(A vs B)을 비교하고 하나를 선택할 수 있다 | MVP |
 | FR20 | 플레이어는 키보드(A / D 키) 또는 클릭으로 선택할 수 있다 | MVP |
 | FR21 | 시스템은 현재 매치의 진행 경과(라운드, 매치 번호, 진행 도트)를 표시한다 | MVP |
@@ -547,11 +550,12 @@ Save One Drop One은 React Router 7 framework mode 기반의 SSR/SSG 하이브�
 | FR30 | 사용자는 결과를 이미지로 다운로드할 수 있다 | MVP |
 | FR31 | 사용자는 결과 페이지 링크를 복사할 수 있다 | MVP |
 | FR32 | 사용자는 결과를 X(Twitter), Reddit, Discord에 직접 공유할 수 있다 | MVP |
-| FR33 | 공개 결과 페이지는 OG 이미지와 메타 태그를 포함한 SSR 렌더링으로 제공된다 | MVP |
+| FR33 | 공개 결과 페이지는 `og:title`, `og:image`, `og:description`, canonical URL을 포함한 SSR 렌더링으로 제공된다 | MVP |
 | FR34 | 방문자는 결과 공유 링크를 클릭하면 해당 브라켓의 결과 화면으로 직접 이동할 수 있다 | MVP |
 | FR35 | 방문자는 결과 화면에서 "Play again" 버튼으로 자신의 플레이를 시작할 수 있다 | MVP |
 | FR35a | 방문자는 Community Verdict 패널에서 "View all N"을 눌러 전체 참가자의 커뮤니티 선택 % 랭킹을 볼 수 있다 | MVP |
 | FR35b | 방문자는 Final Eight 패널에서 "View all N"을 눌러 전체 브라켓 트리를 풀스크린 모달로 볼 수 있다. 모달에는 zoom/drag(슬라이더+FIT), 라운드 칩 필터(All·R128·R64·R32·R16·Q·S·F), 뷰어 경로 하이라이트, Save Image(캡처 범위 오버레이·pending/success/failure) 기능이 포함된다 | MVP |
+| FR35c | 결과 화면은 Champion Hero 내부에 공유 액션을 통합하고, 바로 아래에 같은 카테고리의 "More in [category]" 레일 4개를 표시한다. 레일은 현재 `bracket_pack_id`를 제외하고 `trending_score` 기준 큐레이션/UGC 혼합 브라켓을 보여준다 | MVP |
 
 ### 5. 소셜 참여 및 커뮤니티
 

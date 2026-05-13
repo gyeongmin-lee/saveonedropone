@@ -365,12 +365,13 @@ Data modeling approach:
 - `live_sessions` stores active broadcast session metadata: streamer user, bracket pack, current match, Twitch channel ID, connection status, and EventSub subscription ID.
 - `entry_champion_stats` stores per-entry aggregated pick percentages: `(bracket_pack_id, entry_id)` unique, `champion_count` (times picked as champion), `total_plays` (total completed plays for the bracket pack), `updated_at`. Upserted atomically when a `play_result` is saved. Community ranking % = `champion_count / total_plays`. Insufficient state threshold: 100 total plays (configurable). Pagination: result route loader fetches first 30 entries ordered by `champion_count DESC`; subsequent pages use cursor-based pagination via fetcher on scroll ("load more").
 - `live_votes` stores per-match vote state: `(session_id, user_id, match_id)` unique, `vote_value` ('A'|'B'), `voted_at`. Scoped to the session lifetime; may be cleared after session ends.
-- `user_preferences` stores per-user onboarding interests: `user_id` (FK), `interests` (text[] — category slugs), `updated_at`. One row per authenticated user. Anonymous interests are localStorage-only until login.
-
-Interest preference storage strategy:
-- **Anonymous**: stored in `localStorage` under key `sodo:interests` (string array of category slugs). Survives refresh but not device switch.
-- **On login**: interests are upserted to `user_preferences.interests` in Supabase. Server value takes priority on authenticated sessions.
-- **Home loader**: reads from `user_preferences` for authenticated users; passes `null` for anonymous (client reads `sodo:interests` from localStorage and passes to home feed hydration).
+Home/Browse discovery strategy:
+- MVP does not store anonymous interests, does not create `user_preferences`, and does not render a For You rail.
+- Home Popular Brackets uses a repository query ordered by `trending_score DESC`, with Cold Start fallback to `is_curated DESC, created_at DESC`.
+- `trending_score = plays_7d + (live_now_count * 10) + (share_clicks_7d * 5)`. `live_now_count` comes from active `live_sessions`; `share_clicks_7d` comes from `analytics_events`.
+- Home applies a category cap of 3 Bracket Packs per category when enough categories have content.
+- Category Popular applies the UGC freshness quota in the repository/service layer: top 10 should include at least 2 Bracket Packs created in the last 30 days where eligible content exists.
+- K-pop tag filters are SSR-addressable through URL query params and fetcher-driven grid replacement; other MVP categories omit the tag bar until approved tag data exists.
 
 Migration approach:
 - Use SQL migrations through Supabase CLI.
@@ -1087,7 +1088,6 @@ saveonedropone/
 │   ├── entry.server.tsx
 │   ├── routes/
 │   │   ├── _index.tsx
-│   │   ├── brackets._index.tsx
 │   │   ├── brackets.$categorySlug.$bracketSlug.tsx
 │   │   ├── categories.$categorySlug.tsx
 │   │   ├── play.$bracketSlug.tsx
@@ -1100,8 +1100,7 @@ saveonedropone/
 │   ├── features/
 │   │   ├── browse/
 │   │   │   ├── components/
-│   │   │   ├── hooks/
-│   │   │   └── onboarding/
+│   │   │   └── hooks/
 │   │   ├── bracket-create/
 │   │   │   ├── components/
 │   │   │   └── hooks/
@@ -1143,8 +1142,7 @@ saveonedropone/
 │   │   ├── result.repository.server.ts
 │   │   ├── comment.repository.server.ts
 │   │   ├── moderation.repository.server.ts
-│   │   ├── session.repository.server.ts
-│   │   └── preferences.repository.server.ts
+│   │   └── session.repository.server.ts
 │   ├── services/
 │   │   ├── supabase.server.ts
 │   │   ├── auth.server.ts
@@ -1253,12 +1251,12 @@ Feature vs component rule:
 ### Requirements to Structure Mapping
 
 **브라켓 탐색 및 홈 (FR1-FR7):**
-- Routes: `app/routes/_index.tsx`, `app/routes/brackets._index.tsx`, `app/routes/categories.$categorySlug.tsx`
-- Features: `app/features/browse/` (onboarding/ 포함 — 첫 방문 모달, 관심사 로컬 저장/서버 동기화)
+- Routes: `app/routes/_index.tsx`, `app/routes/categories.$categorySlug.tsx`
+- Features: `app/features/browse/` (Popular Brackets, category card grid, category tabs/filter)
 - Components: `app/components/navigation/`, `app/components/ui/`
-- Repositories: `app/repositories/bracket-pack.repository.server.ts`, `app/repositories/preferences.repository.server.ts`
+- Repositories: `app/repositories/bracket-pack.repository.server.ts`
 - Utils: `app/utils/metadata.server.ts`, `app/utils/route-headers.server.ts`
-- Interests: 비로그인은 `localStorage sodo:interests`, 로그인 시 `user_preferences` upsert; home loader는 인증 상태에 따라 두 소스를 병합
+- No MVP interest preference storage. Personalization/For You requires a future Growth story and architecture update.
 
 **Bracket Pack 생성 (FR8-FR17):**
 - Routes: `app/routes/create._index.tsx`, `app/routes/create.new.tsx`
@@ -1277,10 +1275,11 @@ Feature vs component rule:
 - Routes: `app/routes/results.$resultId.tsx`
 - Features: `app/features/result/` (export/, community-ranking/, full-bracket/ 포함)
 - Domain: `app/domain/result/`
-- Repositories: `app/repositories/result.repository.server.ts`
+- Repositories: `app/repositories/result.repository.server.ts`, `app/repositories/bracket-pack.repository.server.ts` for same-category recommendations
 - Utils: `app/utils/metadata.server.ts`
 - Community Ranking: `entry_champion_stats` 첫 30개를 result 로더에서 함께 로드; 이후 페이지는 fetcher cursor pagination
 - Full Bracket Save Image: `features/result/export/` — `exportBracketTree()` (client Canvas, Q–F 기본, 1080×1350 PNG)
+- More in category rail: result loader fetches 4 same-category Bracket Packs ordered by `trending_score DESC`, excluding the current `bracket_pack_id`.
 
 **소셜 참여 및 댓글 (FR36-FR37):**
 - Features: `app/features/comments/`
@@ -1430,7 +1429,7 @@ No epics/stories were loaded, so validation used PRD FR categories. All major fe
 - FR1-FR7 browse/home: covered by public SSR routes, browse feature, bracket repository, metadata/cache helpers.
 - FR8-FR17 Bracket Pack creation: covered by create routes, bracket schema, storage service, YouTube metadata service, repository layer, auth boundary.
 - FR18-FR25 match/play/OBS display: covered by tournament domain, local play state, matchup feature, OBS route, session domain.
-- FR26-FR35 result/share: covered by result route, result domain, result repository, metadata helpers, fallback OG policy. FR35a (Community Ranking): `entry_champion_stats` table upserted on result save; initial page (first 30 entries) loaded in the result route loader alongside result data; subsequent pages fetched via fetcher (cursor-based pagination) as the user scrolls. FR35b (Full Bracket Modal): client-side Canvas export of bracket tree; feature lives in `features/result/`.
+- FR26-FR35c result/share: covered by result route, result domain, result repository, bracket-pack recommendations query, metadata helpers, fallback OG policy. FR35a (Community Ranking): `entry_champion_stats` table upserted on result save; initial page (first 30 entries) loaded in the result route loader alongside result data; subsequent pages fetched via fetcher (cursor-based pagination) as the user scrolls. FR35b (Full Bracket Modal): client-side Canvas export of bracket tree; feature lives in `features/result/`. FR35c: same-category More in rail is loaded server-side with the current bracket excluded.
 - FR36-FR37 comments/live participation: covered by comments feature, schemas, rate limiting, session repository, realtime patterns.
 - FR40, FR37-FR38 streamer workflow/live voting: covered by matchup route (Streamer Live Mode panel), session checkpoint model, Twitch EventSub service, realtime client, feature hooks.
 - FR44-FR46 moderation/DMCA: covered by moderation routes, visibility policy, moderation repository, action logs.

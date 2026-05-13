@@ -185,13 +185,12 @@ loading, empty, error, offline, removed, private, rate-limited 상태는 사용�
 
 | 화면 | 경로/표면 | 주 사용자 | 렌더링 | 목적 |
 |---|---|---|---|---|
-| Home / Browse | `/`, `/brackets`, `/categories/:categorySlug` | 시청자, 스트리머 | SSR | featured/trending/category 기반 브라켓 발견 |
+| Home / Browse | `/`, `/categories/:categorySlug` | 시청자, 스트리머 | SSR | Popular Brackets, category card grid, Popular/New category tabs 기반 브라켓 발견 |
 | Matchup play | `/play/:bracketSlug` | 시청자, 스트리머 | CSR 중심 | 1v1 선택, undo/restart, 로컬 저장, 채팅 투표 집계 표시 |
 | Streamer live mode | Matchup play 내 opt-in 패널 | 스트리머 | CSR | Twitch 채팅 연동 활성화, !A/!B 투표 집계 |
 | Result page | `/results/:resultId` | 시청자, 스트리머 | SSR | 챔피언, 경로, 통계, 공유, 댓글 |
 | Full Community Ranking View | Result 내 modal | 시청자 | Client overlay | 전체 N명 커뮤니티 선택 % 랭킹. 검색, All entrants 탭(MVP). My picks·By group·Biggest upsets(Growth). 무한 스크롤. Insufficient 상태 포함. |
 | Full Bracket Modal | Result 내 modal | 시청자 | Client overlay | 전체 브라켓 트리 zoom/drag, 라운드 칩 필터(All·R128…F), 줌 슬라이더+FIT, 뷰어 경로 하이라이트, Save Image(점선 오버레이 포함). Offline(Growth). |
-| First-visit onboarding modal | Home 진입 시 조건부 | 시청자 | Client overlay | 관심사 카테고리 선택(10개) → 홈 피드 "For you" 레일 in-place 추가. Dismissed 시 사이드바 Personalize로 재진입. |
 | Create bracket flow | `/create`, `/create/new` | UGC 제작자 | SSR + CSR form | 단일 페이지 Composer — 스마트 붙여넣기, 항목 큐, 브라켓 설정, 공개 URL 생성 |
 | Auth callback / sign-in sheet | `/auth/callback`, modal | 제작자 | SSR/action | Google/Twitch 로그인 |
 
@@ -247,10 +246,7 @@ flowchart TD
 
 ```mermaid
 flowchart TD
-  A[Shared link / Home / VOD link] --> B{첫 방문자인가?}
-  B -- Yes --> C[Category onboarding modal]
-  C --> D[Recommended bracket]
-  B -- No --> D
+  A[Shared link / Home / VOD link] --> D[Bracket or result page]
   D --> E[Start tournament]
   E --> F{미완료 로컬 진행 있음?}
   F -- Yes --> G[Resume / restart modal]
@@ -361,14 +357,14 @@ flowchart TD
 **Primary content**
 
 - Sticky top nav: logo, search, screen/route toggles, create CTA
-- Sidebar: category list, live streamer rail
-- Hero/featured bracket: 제목, thumbnail, item count, total plays, live count
-- Trending grid: BracketCard 반복
-- Quick-play area: 가장 빠른 시작 후보
+- Popular Brackets: cross-category BracketCard 반복, 동일 카테고리 최대 3개
+- Browse by category: 5x2 카드 그리드. 각 카드는 이모지, 16:9 placeholder/대표 썸네일, 카테고리 레이블을 포함하고 `/categories/:categorySlug`로 이동
+- Category page tabs: Popular / New
+- Category tag filter: MVP에서는 K-pop만 표시. 태그 없는 카테고리는 필터 바를 렌더링하지 않음
 
 **States**
 
-- Loading: hero skeleton + card skeleton grid
+- Loading: section skeleton + card skeleton grid
 - Empty category: "No brackets in this tag yet" + broader category CTA
 - Error: retry action, cached/trending fallback 가능
 - No live streamers: rail은 유지하되 빈 상태 메시지 표시
@@ -376,7 +372,11 @@ flowchart TD
 **Notes**
 
 - Visual and component reference는 `docs/design`에서 직접 확인한다.
-- 모바일에서는 sidebar를 category drawer 또는 horizontal category rail로 접는다.
+- 홈의 "Popular Brackets" 레이블은 데이터 상태와 무관하게 고정한다. "Trending Now" 전환 로직은 없다.
+- Popular 정렬은 `trending_score = plays_7d + (live_now_count * 10) + (share_clicks_7d * 5)`를 사용하되, Cold Start에서는 `is_curated DESC, created_at DESC`로 fallback한다.
+- 카테고리 페이지의 Popular 탭은 상위 10개 중 최소 2개를 최근 30일 내 생성 브라켓으로 보장한다. 대상이 2개 미만이면 쿼터를 적용하지 않는다.
+- 태그 선택은 전체 페이지 리로드 없이 그리드 영역만 서버 fetch + skeleton UI로 갱신하고, URL 쿼리를 갱신한다.
+- 모바일에서는 Home category grid와 category page tabs/filter가 겹치거나 잘리지 않도록 1-column 또는 large-phone 2-column card layout을 사용한다.
 
 ### Matchup Play
 
@@ -445,9 +445,10 @@ flowchart TD
 **Primary content**
 
 - Champion hero
+- Share actions inside Champion Hero: copy link, download image, X/Reddit/Discord
+- More in [category] rail directly below Champion Hero
 - Final path / mini bracket
 - Stats: total time, path, community aggregate
-- Share actions: copy link, download image, X/Reddit/Discord
 - Play again CTA
 - Comments section
 - Report action
@@ -464,35 +465,31 @@ flowchart TD
 
 - Visual and component reference는 `docs/design`에서 직접 확인한다.
 - SSR metadata가 핵심이므로 결과 title, description, canonical, og tags가 초기 HTML에 있어야 한다.
+- 모바일 결과 페이지 순서는 Champion Hero(share 내장) -> More in [category] 4개 -> Stats/Final Path/Community Summary -> Comments로 고정한다.
+- "More in [category]"는 같은 카테고리의 `trending_score` 상위 4개를 보여주며, 현재 `bracket_pack_id`는 제외한다. 푸터 링크는 "See all in [category]"로 카테고리 페이지에 연결한다.
+- 동적 OG 스펙은 `og:title=[Champion] wins [Bracket Pack]!`, `og:image=champion item image or fallback`, `og:description=[plays_count]명이 플레이했습니다. 당신의 선택은?`를 기본으로 한다.
 
 ### Onboarding Modal
 
-**Purpose:** 첫 방문자가 관심사 카테고리를 선택해 홈 피드를 즉시 개인화한다. 강제 게이팅 없이 항상 Skip 가능.
+**Status:** Removed from MVP scope by the 2026-05-13 Home/Browse correct-course decision.
+
+**Purpose:** MVP에서는 구현하지 않는다. 개인화/For You/관심사 저장은 소셜 공유 기반 발견 루프 검증 이후 Growth로 재평가한다.
 
 **States**
 
-- **fresh**: 모달 오픈, 아무것도 선택되지 않음. 홈 피드가 배경에 dimmed.
-- **selecting**: 1개 이상 선택됨. "Save & explore →" CTA 활성화. 선택 수·핀될 브라켓 수 표시.
-- **reshuffle**: "Save & explore →" 클릭 후 모달 닫히는 중. 홈 피드 dim 해제, 상단에 "For you" 레일 in-place 추가.
-- **dismissed**: Skip 클릭. 모달 닫힘, 기본 피드 표시. 사이드바에 "Personalize" 항목 노출로 재진입 가능.
+- 없음. 첫 방문 시 모달을 띄우지 않는다.
 
 **Interaction rules**
 
-- 1개 이상 카테고리 선택 시 CTA 활성화 ("Save & explore →"). 미선택 시 비활성.
-- "Skip for now"는 항상 클릭 가능.
-- dismissed 후 재진입: 사이드바 "Personalize" 항목 클릭 → 모달 재오픈. Floating pill 없음.
-- 카테고리: K-pop / Anime & manga / Gaming / Movies & TV / Sports / Music / Internet & memes / Food / Tech / Books (10개).
+- `sodo:interests`, "For you" 레일, "Personalize" 사이드바 항목을 MVP에 추가하지 않는다.
 
 **Post-selection home feed**
 
-- 상단 "For you" 레일: 선택 카테고리 기반 브라켓 핀. "N INTERESTS" 뱃지, "Edit interests" 링크 포함.
-- "Trending today" 등 기존 섹션은 "For you" 레일 아래 유지.
-- Reshuffle toast: "N brackets pinned to your home" (토스트 카피·시각 처리는 `docs/design/onboarding/states.jsx` 참조).
+- 없음.
 
 **Notes**
 
-- 시각·컴포넌트 레퍼런스는 `docs/design/onboarding/states.jsx` 참조.
-- 온보딩은 첫 방문에만 자동 노출. 이후는 사이드바 Personalize 항목으로만 재진입.
+- 카테고리 선택 니즈는 Home의 5x2 category card grid와 `/categories/:categorySlug` 페이지가 담당한다.
 
 ---
 
