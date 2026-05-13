@@ -29,8 +29,11 @@
 const { useState } = React;
 
 const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
-  "screen": "result",
-  "liveState": "regular"
+  "screen": "home",
+  "liveState": "connected",
+  "bracketId": "visuals",
+  "categoryId": "kpop",
+  "popularCount": 8
 }/*EDITMODE-END*/;
 
 const SCREEN_OPTIONS = [
@@ -41,19 +44,40 @@ const SCREEN_OPTIONS = [
 
 function App() {
   const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
-  const onScreenChange = (s) => setTweak('screen', s);
+  const onScreenChange = (s, extra) => {
+    setTweak({ screen: s, ...(extra || {}) });
+  };
 
   return (
     <div data-screen-label={`streamer — ${tweaks.screen}`}>
       <window.StreamerTheme screen={tweaks.screen} onScreenChange={onScreenChange} t={tweaks} />
       <TweaksPanel title="Tweaks">
         <TweakSection label="Screen">
-          <TweakRadio
+          <TweakSelect
             value={tweaks.screen}
             onChange={(v) => setTweak('screen', v)}
             options={SCREEN_OPTIONS}
           />
         </TweakSection>
+        {tweaks.screen === 'home' && (
+          <TweakSection label="Home">
+            <TweakSlider
+              label="Popular Brackets count"
+              value={tweaks.popularCount}
+              onChange={(v) => setTweak('popularCount', v)}
+              min={4} max={16} step={1}
+            />
+          </TweakSection>
+        )}
+        {tweaks.screen === 'category' && (
+          <TweakSection label="Category">
+            <TweakSelect
+              value={tweaks.categoryId || 'kpop'}
+              onChange={(v) => setTweak('categoryId', v)}
+              options={(window.KPOP_DATA?.CATEGORIES || []).map((c) => ({ value: c.id, label: `${c.icon} ${c.label}` }))}
+            />
+          </TweakSection>
+        )}
         {tweaks.screen === 'matchup' && (
           <TweakSection label="Live Mode">
             <TweakSelect

@@ -1,104 +1,71 @@
-# Save One Drop One — Design System
+# Save One Drop One — Design Files
 
-A streamer-first 1v1 tournament platform for "VS culture." Save One Drop One lets streamers run live bracket tournaments (K-pop idols, anime characters, video games, etc.) optimized for OBS broadcast and viewer-chat participation, with shareable result brackets that drive a "you're wrong" viral loop.
+A streamer-first 1v1 tournament platform for "VS culture." Streamers run live bracket tournaments (K-pop idols, anime characters, video games, etc.) optimized for OBS broadcast and viewer-chat participation, with shareable result brackets that drive a "you're wrong" viral loop.
 
-This design system is extracted from **Theme 04 — Streamer Native (Dark)**, the direction the team chose to take into production.
-
-## Source
-
-- `Save One Drop One.html` — the original 5-theme exploration. Theme 04 (`theme-streamer.jsx`) is the source of this system.
-- Product brief: `_inputs/product-brief.md` (paste-in)
-
-## Core product surfaces
-
-1. **Browse / Home** — discover featured brackets, see live streamers, browse by category
-2. **Matchup (1v1)** — the core game loop; pick A or B with live chat overlay
-3. **Result + Share** — your champion bracket, social share, community comparison
-
-## Index
-
-- `README.md` — this file
-- `colors_and_type.css` — design tokens (CSS custom properties)
-- `preview/` — design-system preview cards
-- `ui_kits/streamer-native/` — recreatable React components + interactive index.html
-- `SKILL.md` — agent skill manifest
+This project contains **5 HTML mockups** of the core product surfaces, plus their shared React component files. Each `.html` page is a standalone in-browser prototype (React + Babel via `<script type="text/babel">`); there is no build step.
 
 ---
 
-## CONTENT FUNDAMENTALS
+## File map
 
-**Voice:** Direct, second-person, slightly competitive. The product is about settling arguments, so copy leans into that energy without being mean.
+### Source-of-truth HTML pages
 
-**Examples from the prototype:**
-- "K-Pop Girl Group Members 2026" (no fluff, just what it is)
-- "Save Jiwoo →" (action verb + name, on every primary button)
-- "▶ Start tournament" / "📺 OBS source URL" (functional, not marketing-y)
-- "of 482K players agree" (social proof, no exclamation)
-- "Press A / D · or click either side" (instructional, mono font)
+| Page | What it is | Loads (in order) |
+| --- | --- | --- |
+| `Save One Drop One.html` | Main app — Home / Category / Matchup / Result screens, sidebar nav, top bar. Tweaks panel switches screens + tunes the home feed. | `data.jsx` → `tweaks-panel.jsx` → `theme-streamer.jsx` |
+| `Create Bracket.html` | Streamer-facing bracket composer: name it, add contestants, publish. Two screens (Composer, Published) laid out side-by-side on a design canvas. | `create-bracket/shared.jsx` → `create-bracket/composer.jsx` → `create-bracket/published.jsx` |
+| `Full Bracket.html` | Full tournament bracket view — round-by-round visualization of an in-progress or completed tournament. Multiple states on a design canvas. | `create-bracket/design-canvas.jsx` → `full-bracket/states.jsx` |
+| `Live Mode States.html` | Streamer "Live Mode" panel states (overlay that extends MatchupScreen for OBS broadcast). Multiple states on a design canvas. | `create-bracket/design-canvas.jsx` → `create-bracket/shared.jsx` → `live-mode/states.jsx` |
+| `Community Ranking.html` | Community-aggregated results / leaderboard view. Multiple states on a design canvas. | `create-bracket/design-canvas.jsx` → `community-ranking/states.jsx` |
 
-**Casing:** Sentence case for everything. UPPERCASE only inside `.mono` micro-labels (section headers, badges).
+### Shared component files
 
-**Numbers:** Always tabular (font-variant-numeric: tabular-nums). K/M abbreviations ("482K plays", "1,240 watching"). Round numbers when the precision doesn't matter.
+| File | Used by | Contents |
+| --- | --- | --- |
+| `data.jsx` | `Save One Drop One.html` | Mock data: `window.KPOP_DATA` — contestants `C`, `FEATURED_BRACKETS`, `CATEGORIES`, `ACTIVE_STREAMERS`, `TRENDING_NOW`, helpers (`placeholderBg`). |
+| `theme-streamer.jsx` | `Save One Drop One.html` | The whole streamer-native theme: `StreamerTheme`, `StreamerHome`, `StreamerCategory`, `StreamerMatchup`, `StreamerResult`, `StreamerBracketCard`, `StreamerSidebar`. Exposed on `window.*`. |
+| `tweaks-panel.jsx` | `Save One Drop One.html` | Reusable Tweaks panel + `useTweaks` hook (state + persistence via `__edit_mode_set_keys`). Standard starter component. |
+| `create-bracket/design-canvas.jsx` | Create Bracket, Full Bracket, Live Mode States, Community Ranking | Pan/zoom design-canvas chrome — `DesignCanvas`, `DCSection`, `DCArtboard`, `DCPostIt`. Used to lay out multiple states side-by-side. |
+| `create-bracket/shared.jsx` | Create Bracket, Live Mode States | Shared atoms: buttons, panels, headers, contestant tiles — anything reused across the bracket flows. |
+| `create-bracket/composer.jsx` | Create Bracket | Composer screen — name the bracket, add contestants, configure. |
+| `create-bracket/published.jsx` | Create Bracket | Published-state screen — bracket is live, share URL visible. |
+| `full-bracket/states.jsx` | Full Bracket | Multiple full-bracket render states on the canvas. |
+| `live-mode/states.jsx` | Live Mode States | Multiple Live Mode panel states on the canvas. |
+| `community-ranking/states.jsx` | Community Ranking | Multiple community-ranking states on the canvas. |
 
-**Emoji:** Sparingly, only in section labels (🔥 Hottest pick, 😱 Biggest upset, ⚡ Fastest run) — never in body or buttons. Twitch-adjacent but restrained.
+### Other
 
-**Mono font** is reserved for:
-- Section labels ("BROWSE", "LIVE STREAMERS")
-- Stats and counters (vote percentages, viewer counts)
-- Keyboard shortcuts ("Press A / D")
-
----
-
-## VISUAL FOUNDATIONS
-
-**Background:** `#0e0e12` (near-black with a faint blue undertone). Top nav slightly darker at `#0a0a0e`. Cards sit on `#18181f`.
-
-**Primary accent:** `#7c3aed` (purple) — used on primary buttons, active states, branded gradients.
-**Secondary accent:** `#38e07b` (green) — used for live indicators, win states, positive deltas.
-These two colors form the brand gradient: `linear-gradient(135deg, #7c3aed, #b794f4)` and avatar/champion treatments use a 2-stop purple→green sweep.
-
-**Type:** Inter for everything (400/500/600/700/800). Display weights are 800 with letter-spacing -0.02em. Body is 14–15px / 1.5 line-height. JetBrains Mono for tabular numbers and labels.
-
-**Cards:**
-- `border-radius: 10px` standard, 12px on hero matchup tiles
-- 1px hairline at `rgba(255,255,255,0.06)` (the `.ring` class)
-- Background `#18181f`
-- No shadow. The hairline is the entire elevation system.
-
-**Buttons:**
-- Primary: solid `#7c3aed` purple, white text, 6px radius, 600 weight, 10–12px vertical padding
-- Secondary: `#1f1f28` charcoal background, `#e8e6f0` text
-- Tertiary/utility: transparent + 1px `#1f1f28` border
-- Icon buttons: square, transparent, 6px radius
-
-**Pills/Badges:**
-- 999px (fully rounded)
-- Used for tags, vote percentages, seed numbers
-- Live indicators use `rgba(56,224,123,0.2)` background with `#38e07b` foreground
-
-**Layout:**
-- Top nav: 56px tall, sticky
-- Sidebar: 220px fixed (Browse view)
-- Right rail: 320px fixed (Matchup chat)
-- Main content gutters: 24–32px
-
-**Animation:** None on this surface — the live chat scrolls but otherwise the UI is static. Hover states are subtle (no transitions, just color shifts).
-
-**Hover/press:** Buttons darken slightly. Active nav items fill with `rgba(124,58,237,0.15)` and use the purple as foreground.
-
-**Imagery:** Bracket thumbnails use diagonal-stripe gradient placeholders generated from a hue value (see `placeholderBg` in `data.jsx`). When real photos exist, they're treated edge-to-edge with a bottom protection gradient `linear-gradient(180deg, transparent 50%, rgba(14,14,18,0.92) 100%)` for legible captions.
-
-**Iconography:** Unicode symbols only (▶ ↻ ⌕ ↓ 🔗 ★ ●). No icon font. Emoji used as category icons in the sidebar (🎤 🎮 📺 🏈) — these would be replaced with proper icon sprites in production.
+- `uploads/` — reference screenshots and sample images the user pasted in. Not loaded by any page.
 
 ---
 
-## CAVEATS
+## Conventions
 
-- This system is extracted from a single design exploration, not a real production codebase. The token values are observed, not authoritative.
-- No real photography exists yet — all visuals are placeholders. Imagery treatment is an assumption.
-- Icons currently use Unicode + emoji; pick a real icon library (Lucide recommended for the modern dark look) before shipping.
-- No mobile breakpoint defined. The current layout assumes ≥1280px.
+- **No build step.** All `.jsx` files are loaded directly via `<script type="text/babel" src="...">` and share a single `window` scope per HTML page. Components export themselves via `window.ComponentName = ComponentName` at the bottom of each file.
+- **React 18.3.1 + Babel standalone 7.29.0** — pinned versions in every HTML.
+- **No CSS files.** Styles are inline (`style={{}}` props) or in per-file `<style>` blocks scoped via a className like `.theme-streamer`.
+- **Fonts:** Inter (400–800) + JetBrains Mono, loaded from Google Fonts in each HTML head.
 
----
+## Visual language (observed)
 
-**To share this design system across your org, set this project's File type to "Design System" in the Share menu.**
+The streamer-native theme is the canonical look. Values below are pulled from the live mocks — they're observations, not authoritative tokens.
+
+- **Background:** `#0e0e12` (page), `#0a0a0e` (top nav), `#18181f` (cards)
+- **Primary accent:** `#7c3aed` purple → `#b794f4` lighter purple
+- **Secondary accent:** `#38e07b` green (live / win / positive)
+- **Hairline:** `box-shadow: 0 0 0 1px rgba(255,255,255,0.06)` (the `.ring` class is the entire elevation system — no drop shadows)
+- **Radius:** 10px standard, 12px on hero matchup tiles, 6px on buttons, 999px on pills
+- **Type:** Inter for everything; display weight 800 with `letter-spacing: -0.02em`; body 14–15px / 1.5; JetBrains Mono for numbers and small UPPERCASE labels (the `.mono` class)
+- **Layout:** 56px top nav, 220px left sidebar, 320px right chat rail (Matchup only), 24–32px content gutters
+- **Imagery:** All bracket thumbnails are diagonal-stripe gradient placeholders generated from a hue (see `placeholderBg` in `data.jsx`). No real photography yet.
+- **Iconography:** Unicode symbols (▶ ↻ ⌕ ↓ 🔗 ★ ●) + emoji in category labels (🎤 🎮 📺 🏈). Replace with a real icon set (Lucide recommended) before shipping.
+
+## For Claude Code
+
+When adapting this to a production codebase:
+
+1. **Start with `Save One Drop One.html` + `theme-streamer.jsx`** — that's the source of truth for the main app shell and its four screens (Home, Category, Matchup, Result). Everything else extends from there.
+2. **`data.jsx` is the data contract.** The shape of `KPOP_DATA` is what every screen reads. Map it to your real API.
+3. **`tweaks-panel.jsx`** is a prototype-only dev panel — strip it from production.
+4. **The other 4 HTMLs are design canvases**, not app routes. They each show multiple states of one surface side-by-side. The actual screens you ship are the components inside `create-bracket/composer.jsx`, `create-bracket/published.jsx`, `full-bracket/states.jsx`, `live-mode/states.jsx`, and `community-ranking/states.jsx` — extract those from their canvas wrappers.
+5. **No mobile breakpoint** exists yet. The current layout assumes ≥1280px.

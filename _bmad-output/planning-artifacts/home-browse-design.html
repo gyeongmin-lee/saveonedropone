@@ -1,0 +1,1289 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Home / Browse 설계 문서 — saveonedropone</title>
+<style>
+  /* ── Design Tokens (from docs/design/colors_and_type.css) ── */
+  :root {
+    --bg-base:      #0e0e12;
+    --bg-nav:       #0a0a0e;
+    --bg-card:      #18181f;
+    --bg-input:     #0a0a0e;
+    --bg-hover:     #1f1f28;
+    --fg-primary:   #e8e6f0;
+    --fg-secondary: #c4c2d2;
+    --fg-muted:     #9b9aab;
+    --fg-quiet:     #6b6b7d;
+    --accent-purple:       #7c3aed;
+    --accent-purple-light: #b794f4;
+    --accent-green:        #38e07b;
+    --accent-purple-dim:   rgba(124,58,237,0.15);
+    --accent-green-dim:    rgba(56,224,123,0.18);
+    --accent-yellow-dim:   rgba(250,204,21,0.15);
+    --accent-red-dim:      rgba(239,68,68,0.15);
+    --border-subtle: #1f1f28;
+    --border-ring:   rgba(255,255,255,0.06);
+    --gradient-brand: linear-gradient(135deg, #7c3aed, #38e07b);
+    --font-sans: "Inter", system-ui, -apple-system, sans-serif;
+    --font-mono: "JetBrains Mono", "IBM Plex Mono", ui-monospace, monospace;
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg-base);
+    color: var(--fg-primary);
+    font: 500 14px/1.6 var(--font-sans);
+    min-height: 100vh;
+  }
+
+  /* ── Layout ── */
+  .layout {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    grid-template-rows: auto 1fr;
+    min-height: 100vh;
+  }
+
+  /* ── Top Banner ── */
+  .top-banner {
+    grid-column: 1 / -1;
+    background: var(--bg-nav);
+    border-bottom: 1px solid var(--border-subtle);
+    padding: 16px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .banner-left { display: flex; align-items: center; gap: 12px; }
+
+  .brand-dot {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--gradient-brand);
+    flex-shrink: 0;
+  }
+
+  .banner-title {
+    font: 700 15px/1 var(--font-sans);
+    color: var(--fg-primary);
+  }
+
+  .banner-subtitle {
+    font: 500 12px/1 var(--font-sans);
+    color: var(--fg-muted);
+    margin-top: 3px;
+  }
+
+  .banner-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px; border-radius: 20px;
+    font: 600 11px/1 var(--font-mono);
+    letter-spacing: 0.05em; text-transform: uppercase;
+  }
+
+  .badge-draft    { background: var(--accent-yellow-dim); color: #fbbf24; border: 1px solid rgba(251,191,36,0.25); }
+  .badge-pending  { background: var(--accent-purple-dim); color: var(--accent-purple-light); border: 1px solid rgba(124,58,237,0.3); }
+  .badge-approved { background: var(--accent-green-dim); color: var(--accent-green); border: 1px solid rgba(56,224,123,0.3); }
+  .badge-changed  { background: var(--accent-red-dim); color: #f87171; border: 1px solid rgba(239,68,68,0.25); }
+
+  .meta-date {
+    font: 500 12px/1 var(--font-sans);
+    color: var(--fg-quiet);
+  }
+
+  /* ── Sidebar TOC ── */
+  .sidebar {
+    background: var(--bg-nav);
+    border-right: 1px solid var(--border-subtle);
+    padding: 24px 0;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    align-self: start;
+  }
+
+  .toc-label {
+    font: 600 10px/1 var(--font-mono);
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--fg-quiet);
+    padding: 0 20px 12px;
+  }
+
+  .toc-item {
+    display: block;
+    padding: 7px 20px;
+    font: 500 13px/1.3 var(--font-sans);
+    color: var(--fg-muted);
+    text-decoration: none;
+    border-left: 2px solid transparent;
+    transition: all 0.15s;
+  }
+
+  .toc-item:hover {
+    color: var(--fg-primary);
+    background: var(--bg-hover);
+    border-left-color: var(--accent-purple);
+  }
+
+  .toc-item.active {
+    color: var(--accent-purple-light);
+    border-left-color: var(--accent-purple);
+    background: var(--accent-purple-dim);
+  }
+
+  .toc-sub {
+    padding-left: 32px;
+    font-size: 12px;
+    color: var(--fg-quiet);
+  }
+
+  .toc-divider {
+    height: 1px;
+    background: var(--border-subtle);
+    margin: 10px 20px;
+  }
+
+  /* ── Main Content ── */
+  .main {
+    padding: 40px 48px;
+    max-width: 900px;
+  }
+
+  /* ── Section ── */
+  .section { margin-bottom: 56px; }
+
+  .section-header {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 24px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .section-num {
+    width: 28px; height: 28px; border-radius: 50%;
+    background: var(--accent-purple-dim);
+    border: 1px solid rgba(124,58,237,0.4);
+    color: var(--accent-purple-light);
+    font: 700 12px/28px var(--font-mono);
+    text-align: center; flex-shrink: 0;
+  }
+
+  h1 { font: 800 28px/1.1 var(--font-sans); color: var(--fg-primary); }
+  h2 { font: 700 20px/1.2 var(--font-sans); color: var(--fg-primary); }
+  h3 { font: 700 15px/1.3 var(--font-sans); color: var(--fg-secondary); margin: 20px 0 10px; }
+  h4 { font: 600 13px/1.3 var(--font-sans); color: var(--fg-muted); margin: 14px 0 8px; text-transform: uppercase; letter-spacing: 0.06em; }
+
+  p { color: var(--fg-secondary); margin-bottom: 10px; line-height: 1.65; }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-ring);
+    border-radius: var(--radius-lg);
+    padding: 20px 24px;
+    margin-bottom: 16px;
+  }
+
+  .card-highlight {
+    border-color: rgba(124,58,237,0.35);
+    background: linear-gradient(135deg, rgba(124,58,237,0.06), rgba(56,224,123,0.04));
+  }
+
+  .card-warning {
+    border-color: rgba(251,191,36,0.25);
+    background: var(--accent-yellow-dim);
+  }
+
+  .card-removed {
+    border-color: rgba(239,68,68,0.2);
+    background: var(--accent-red-dim);
+    opacity: 0.75;
+  }
+
+  /* ── Decision box ── */
+  .decision {
+    display: flex; gap: 14px; align-items: flex-start;
+    background: var(--bg-card);
+    border: 1px solid var(--border-ring);
+    border-left: 3px solid var(--accent-purple);
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+    padding: 14px 18px;
+    margin: 12px 0;
+  }
+
+  .decision-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .decision-body { flex: 1; }
+  .decision-label {
+    font: 600 10px/1 var(--font-mono);
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--accent-purple-light);
+    margin-bottom: 5px;
+  }
+  .decision-text { color: var(--fg-secondary); font-size: 13px; line-height: 1.55; }
+
+  .decision.green { border-left-color: var(--accent-green); }
+  .decision.green .decision-label { color: var(--accent-green); }
+
+  /* ── Tables ── */
+  .table-wrap { overflow-x: auto; margin: 16px 0; }
+
+  table {
+    width: 100%; border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  th {
+    background: var(--bg-hover);
+    color: var(--fg-muted);
+    font: 600 11px/1 var(--font-mono);
+    letter-spacing: 0.08em; text-transform: uppercase;
+    padding: 10px 14px; text-align: left;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  td {
+    padding: 10px 14px;
+    color: var(--fg-secondary);
+    border-bottom: 1px solid var(--border-subtle);
+    vertical-align: top;
+    line-height: 1.5;
+  }
+
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  td.check-yes { color: var(--accent-green); font-weight: 700; }
+  td.check-no  { color: #f87171; font-weight: 700; }
+  td.check-mid { color: #fbbf24; font-weight: 700; }
+  td strong { color: var(--fg-primary); }
+
+  /* ── Code blocks ── */
+  pre {
+    background: var(--bg-input);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    padding: 16px 20px;
+    font: 500 12px/1.7 var(--font-mono);
+    color: #a5f3c0;
+    overflow-x: auto;
+    margin: 12px 0;
+  }
+
+  code {
+    font: 500 12px/1 var(--font-mono);
+    background: var(--bg-hover);
+    color: var(--accent-purple-light);
+    padding: 2px 6px;
+    border-radius: 3px;
+  }
+
+  pre code { background: none; color: inherit; padding: 0; }
+
+  .comment { color: var(--fg-quiet); }
+  .keyword { color: #c084fc; }
+  .string  { color: #86efac; }
+  .num     { color: #fb923c; }
+
+  /* ── Layout wireframe ── */
+  .wireframe {
+    background: var(--bg-input);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    margin: 16px 0;
+    font: 500 12px/1.6 var(--font-mono);
+    color: var(--fg-muted);
+  }
+
+  .wireframe .wf-block {
+    border: 1px dashed var(--border-subtle);
+    border-radius: var(--radius-sm);
+    padding: 8px 12px;
+    margin: 6px 0;
+    color: var(--fg-secondary);
+  }
+
+  .wireframe .wf-block.featured {
+    border-color: rgba(124,58,237,0.5);
+    background: var(--accent-purple-dim);
+    color: var(--accent-purple-light);
+  }
+
+  .wireframe .wf-block.trending {
+    border-color: rgba(251,191,36,0.3);
+    background: var(--accent-yellow-dim);
+    color: #fbbf24;
+  }
+
+  .wireframe .wf-block.changed {
+    border-color: rgba(239,68,68,0.4);
+    background: var(--accent-red-dim);
+    color: #f87171;
+  }
+
+  .wireframe .wf-arrow {
+    text-align: center; color: var(--fg-quiet); padding: 2px 0; font-size: 11px;
+  }
+
+  /* ── Pills / Tags ── */
+  .pill {
+    display: inline-block;
+    padding: 3px 9px;
+    border-radius: 20px;
+    font: 600 11px/1 var(--font-mono);
+    letter-spacing: 0.04em;
+    margin: 2px;
+  }
+
+  .pill-purple { background: var(--accent-purple-dim); color: var(--accent-purple-light); border: 1px solid rgba(124,58,237,0.3); }
+  .pill-green  { background: var(--accent-green-dim); color: var(--accent-green); border: 1px solid rgba(56,224,123,0.25); }
+  .pill-muted  { background: var(--bg-hover); color: var(--fg-muted); border: 1px solid var(--border-subtle); }
+  .pill-red    { background: var(--accent-red-dim); color: #f87171; border: 1px solid rgba(239,68,68,0.25); }
+
+  /* ── Inline markers ── */
+  .new-marker {
+    font: 600 10px/1 var(--font-mono);
+    background: var(--accent-green-dim);
+    color: var(--accent-green);
+    border: 1px solid rgba(56,224,123,0.3);
+    border-radius: 3px;
+    padding: 1px 5px;
+    letter-spacing: 0.05em;
+    vertical-align: middle;
+    margin-left: 6px;
+  }
+
+  .changed-marker {
+    font: 600 10px/1 var(--font-mono);
+    background: var(--accent-red-dim);
+    color: #f87171;
+    border: 1px solid rgba(239,68,68,0.25);
+    border-radius: 3px;
+    padding: 1px 5px;
+    letter-spacing: 0.05em;
+    vertical-align: middle;
+    margin-left: 6px;
+  }
+
+  /* ── Approval checklist ── */
+  .checklist { list-style: none; }
+
+  .checklist li {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-subtle);
+    font-size: 13px;
+    color: var(--fg-secondary);
+  }
+
+  .checklist li:last-child { border-bottom: none; }
+
+  .check-box {
+    width: 18px; height: 18px; border-radius: 4px;
+    border: 1.5px solid var(--fg-quiet);
+    flex-shrink: 0; margin-top: 1px;
+  }
+
+  .check-box.done {
+    background: var(--accent-green);
+    border-color: var(--accent-green);
+  }
+
+  /* ── Persona row ── */
+  .persona-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin: 16px 0;
+  }
+
+  .persona-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-ring);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+  }
+
+  .persona-name {
+    font: 700 13px/1 var(--font-sans);
+    color: var(--fg-primary);
+    margin-bottom: 4px;
+  }
+
+  .persona-role {
+    font: 500 11px/1 var(--font-mono);
+    color: var(--fg-quiet);
+    margin-bottom: 10px;
+  }
+
+  .persona-item {
+    font: 500 12px/1.5 var(--font-sans);
+    color: var(--fg-secondary);
+    padding: 4px 0;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  .persona-item:last-child { border-bottom: none; }
+  .persona-item .ok   { color: var(--accent-green); }
+  .persona-item .warn { color: #fbbf24; }
+  .persona-item .bad  { color: #f87171; }
+
+  /* ── Sim timeline ── */
+  .timeline {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin: 16px 0;
+  }
+
+  .timeline-point {
+    background: var(--bg-card);
+    border: 1px solid var(--border-ring);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+  }
+
+  .timeline-label {
+    font: 700 11px/1 var(--font-mono);
+    color: var(--fg-quiet);
+    letter-spacing: 0.08em; text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .timeline-q {
+    font: 500 12px/1.5 var(--font-sans);
+    color: var(--fg-secondary);
+    padding: 3px 0;
+  }
+
+  .q-pass { color: var(--accent-green); }
+  .q-prog { color: #fbbf24; }
+  .q-fail { color: #f87171; }
+
+  /* ── Scrollspy ── */
+  .section[id] { scroll-margin-top: 24px; }
+
+  /* ── Util ── */
+  ul.bullets { padding-left: 20px; margin: 8px 0; }
+  ul.bullets li { color: var(--fg-secondary); margin-bottom: 4px; font-size: 13px; line-height: 1.55; }
+  ul.bullets li strong { color: var(--fg-primary); }
+
+  hr { border: none; border-top: 1px solid var(--border-subtle); margin: 28px 0; }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 12px 0; }
+
+  @media (max-width: 860px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { display: none; }
+    .main { padding: 24px 20px; }
+    .persona-row, .timeline, .two-col { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ── Top Banner ── -->
+  <header class="top-banner">
+    <div class="banner-left">
+      <div class="brand-dot"></div>
+      <div>
+        <div class="banner-title">Home / Browse 설계 문서</div>
+        <div class="banner-subtitle">saveonedropone — Epic 1: Public Discovery &amp; Browse</div>
+      </div>
+    </div>
+    <div class="banner-right">
+      <span class="badge badge-approved">✓ Design Updated</span>
+      <span class="meta-date">2026-05-13</span>
+    </div>
+  </header>
+
+  <!-- ── Sidebar TOC ── -->
+  <nav class="sidebar">
+    <div class="toc-label">목차</div>
+    <a class="toc-item" href="#context">배경 및 목적</a>
+    <a class="toc-item" href="#decision">핵심 구조 결정</a>
+    <a class="toc-item" href="#home">홈 화면 구조</a>
+    <a class="toc-item toc-sub" href="#home-sections">섹션 구성</a>
+    <a class="toc-item toc-sub" href="#home-coldstart">Cold Start 정책</a>
+    <a class="toc-item" href="#category">카테고리 페이지</a>
+    <a class="toc-item toc-sub" href="#cat-tabs">탭 구성</a>
+    <a class="toc-item toc-sub" href="#cat-tags">태그 필터 UX</a>
+    <a class="toc-item" href="#algorithms">알고리즘 확정안</a>
+    <a class="toc-item toc-sub" href="#algo-trending">Trending Score</a>
+    <a class="toc-item toc-sub" href="#algo-livenow">live_now 처리</a>
+    <a class="toc-item" href="#result">결과 화면 변경</a>
+    <a class="toc-item" href="#simulation">경로 시뮬레이션</a>
+    <a class="toc-item" href="#personas">페르소나 검증</a>
+    <a class="toc-item" href="#prd-impact">PRD/Epics 영향</a>
+    <a class="toc-item" href="#impl-order">구현 순서</a>
+    <a class="toc-item" href="#removed">제거 결정사항</a>
+    <a class="toc-item" href="#approval">승인 체크리스트</a>
+    <div class="toc-divider"></div>
+    <div style="padding: 0 20px;">
+      <div style="font: 600 10px/1 var(--font-mono); color: var(--fg-quiet); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px;">Elicitation 출처</div>
+      <div style="font: 500 11px/1.6 var(--font-sans); color: var(--fg-quiet);">
+        Comparative Analysis Matrix<br>
+        User Persona Focus Group<br>
+        Tree of Thoughts<br>
+        Occam's Razor (정리)<br>
+        First Principles Analysis<br>
+        Party Mode Review<br>
+        <span style="color: var(--accent-green);">Pre-mortem Analysis ✦</span><br>
+        <span style="color: var(--accent-green);">Shark Tank Pitch ✦</span><br>
+        <span style="color: var(--accent-green);">What If Scenarios ✦</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── Main Content ── -->
+  <main class="main">
+
+    <!-- 0. Context -->
+    <section class="section" id="context">
+      <div class="section-header">
+        <div class="section-num">0</div>
+        <h2>배경 및 목적</h2>
+      </div>
+
+      <p>이 문서는 saveonedropone의 <strong>홈 화면(<code>/</code>)과 카테고리 페이지(<code>/categories/[id]</code>)</strong>의 Browse 경험을 설계한다. PRD Epic 1(Public Discovery &amp; Browse)의 Story 1.2, 1.3과 Epic 3(결과 화면)에 직접 영향을 미치며, Advanced Elicitation 및 Party Mode Review 세션(2026-05-10)의 결과를 반영한다.</p>
+
+      <div class="card card-highlight">
+        <h4>설계 원칙</h4>
+        <ul class="bullets" style="margin:0;">
+          <li><strong>Occam's Razor:</strong> MVP 단계에서 알고리즘 복잡도는 데이터 가용성에 비례한다. 단순한 수동 큐레이션이 ML보다 낫다.</li>
+          <li><strong>소셜 공유 기반 발견:</strong> 이 플랫폼의 발견 구조는 개인화 알고리즘이 아니라 공유 링크 → 결과 페이지 → "More in [category]" 흐름이다. Browse는 보조 화면이다.</li>
+          <li><strong>마찰 최소화:</strong> 온보딩, 로그인 요구, localStorage 추적 없이 링크 클릭 즉시 플레이 가능해야 한다.</li>
+        </ul>
+      </div>
+
+      <div class="card" style="margin-top:12px;">
+        <h4 style="margin-top:0;">바이럴 루프 검증 질문 (MVP 통과 기준)</h4>
+        <ul class="bullets">
+          <li><strong>Q1</strong>: 스트리머가 같은 플랫폼을 2회 이상 방송에 사용하는가?</li>
+          <li><strong>Q2</strong>: 한 번의 방송이 시청자 플레이 세션 1,000회 이상을 파생시키는가?</li>
+          <li><strong>Q3</strong>: 결과 이미지 공유가 공유 링크 유입 세션 50회 이상을 만드는가?</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- 1. Decision -->
+    <section class="section" id="decision">
+      <div class="section-header">
+        <div class="section-num">1</div>
+        <h2>핵심 구조 결정: Option C</h2>
+      </div>
+
+      <div class="decision">
+        <div class="decision-icon">✦</div>
+        <div class="decision-body">
+          <div class="decision-label">확정</div>
+          <div class="decision-text"><strong>Shell 공유, Section 전략 분리.</strong> BracketCard, TopNav, CategoryNav 컴포넌트는 공유하되, 홈과 카테고리 페이지의 섹션 구성과 알고리즘 맥락은 다르다.</div>
+        </div>
+      </div>
+
+      <div class="table-wrap" style="margin-top:16px;">
+        <table>
+          <thead>
+            <tr>
+              <th>항목</th>
+              <th>홈 <code>/</code></th>
+              <th>카테고리 <code>/categories/[id]</code></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>사용자 상태</strong></td>
+              <td>"뭘 할지 모름" — 탐색 모드</td>
+              <td>"K-pop 브라켓 보러 왔음" — 목적 모드</td>
+            </tr>
+            <tr>
+              <td><strong>필요한 폭/깊이</strong></td>
+              <td>Cross-category breadth</td>
+              <td>Within-category depth</td>
+            </tr>
+            <tr>
+              <td><strong>Trending</strong></td>
+              <td class="check-yes">✓ 전체 cross-category</td>
+              <td class="check-yes">✓ 해당 카테고리 내 (Popular 탭)</td>
+            </tr>
+            <tr>
+              <td><strong>탭 구성</strong></td>
+              <td class="check-no">✗ (탭 없음)</td>
+              <td class="check-yes">✓ Popular + New (2탭)</td>
+            </tr>
+            <tr>
+              <td><strong>태그 필터</strong></td>
+              <td class="check-no">✗</td>
+              <td class="check-yes">✓ client-side in-place</td>
+            </tr>
+            <tr>
+              <td><strong>SEO 목적</strong></td>
+              <td>브랜드 쿼리 ("save one drop one")</td>
+              <td>콘텐츠 쿼리 ("kpop idol bracket game")</td>
+            </tr>
+            <tr>
+              <td><strong>공유 컴포넌트</strong></td>
+              <td colspan="2" style="text-align:center; color: var(--fg-muted);">BracketCard · TopNav · CategoryNav</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 2. Home -->
+    <section class="section" id="home">
+      <div class="section-header">
+        <div class="section-num">2</div>
+        <h2>홈 화면 구조</h2>
+      </div>
+
+      <h3 id="home-sections">섹션 구성</h3>
+
+      <div class="wireframe">
+        <div class="wf-block trending">
+          ↑ Popular Brackets
+          <br><span style="font-size:11px; opacity:0.7;">cross-category · 1시간 캐시 · 정렬: trending_score DESC (카테고리 캡 3개) · Cold Start: is_curated DESC, created_at DESC</span>
+        </div>
+        <div class="wf-block featured">
+          Browse by category <span class="new-marker">CHANGED</span>
+          <br><span style="font-size:11px; opacity:0.8;">5×2 카드 그리드 · 각 카드: 카테고리 이모지 + 16/9 placeholder 썸네일 + 레이블 → 클릭 시 해당 카테고리 페이지</span>
+          <br><span style="font-size:11px; opacity:0.7;">K-pop 🎤 · Anime 📺 · Gaming 🎮 · Movies 🎬 · Sports 🏈 · Music 🎵 · TV 📡 · Tech 💻 · Books 📚 · Food 🍔</span>
+        </div>
+      </div>
+
+      <ul class="bullets">
+        <li>Popular Brackets 섹션: cross-category. 스트리머 방문 시 원하는 카테고리가 한눈에 비교됨. Cold Start 시 큐레이션 브라켓 우선 정렬로 Day 1 앵커 역할도 담당.</li>
+        <li><strong>Browse by category 5×2 카드 그리드</strong> <span class="changed-marker">CHANGED</span>: 기존 설계의 가로 pill nav 방식 대신, 각 카테고리를 카드(이모지 + 썸네일 + 레이블)로 표시. 시각적 브라우징 UX + 카테고리 간 직관적 이동 가능.</li>
+        <li>개인화 레일 없음: 발견 경로는 소셜 공유 → 결과 페이지 → "More in [category]". Browse 홈은 단순하게 유지.</li>
+      </ul>
+
+      <div class="decision green">
+        <div class="decision-icon">⚖</div>
+        <div class="decision-body">
+          <div class="decision-label">홈 Trending 카테고리 캡 정책</div>
+          <div class="decision-text">동일 카테고리 브라켓은 홈 Trending에 <strong>최대 3개</strong>까지만 표시한다. 특정 카테고리 바이럴(예: K-pop 방송 후 급등, Reddit 유입 폭발) 시 홈 전체가 단일 카테고리로 도배되는 현상을 방지. 3개 초과분은 <code>trending_score</code> 순위에서 제외하되 해당 카테고리 페이지에서는 정상 노출. 전체 카테고리가 3개 미만인 경우(초기) 캡 미적용.</div>
+        </div>
+      </div>
+
+      <h3 id="home-coldstart">레이블 정책</h3>
+
+      <div class="card card-warning">
+        <h4 style="margin-top:0; color:#fbbf24;">레이블 단순화: 항상 "Popular Brackets" 고정</h4>
+        <pre><code><span class="comment">-- 레이블은 데이터 상태와 무관하게 항상 "Popular Brackets"</span>
+<span class="comment">-- "Trending Now" 레이블 및 전환 로직 없음</span>
+<span class="comment">-- 정렬은 데이터에 따라 자동 반영:</span>
+<span class="comment">--   데이터 있음: trending_score DESC (카테고리 캡 3개 적용)</span>
+<span class="comment">--   Cold Start:  is_curated DESC, created_at DESC</span>
+
+ORDER BY
+  CASE WHEN trending_score > 0 THEN 0 ELSE 1 END,
+  trending_score DESC,
+  is_curated DESC,
+  created_at DESC</code></pre>
+        <p style="margin:0; font-size:13px; color: var(--fg-muted);">"Trending Now" → "Popular Brackets" 전환 임계값 정의, 전환 타이밍 로직이 불필요한 복잡도. 레이블을 고정하고 정렬만 데이터 기반으로 작동시키는 것이 더 단순하고 신뢰성 있음.</p>
+      </div>
+    </section>
+
+    <!-- 3. Category -->
+    <section class="section" id="category">
+      <div class="section-header">
+        <div class="section-num">3</div>
+        <h2>카테고리 페이지 구조</h2>
+      </div>
+
+      <div class="wireframe">
+        <div class="wf-block">
+          /categories/kpop
+        </div>
+        <div class="wf-block featured" style="background: rgba(124,58,237,0.08); border-color: rgba(124,58,237,0.3); color: var(--fg-secondary);">
+          [태그 필터 바]  All · aespa · BLACKPINK · NewJeans · IVE · Le Sserafim · ...
+          <br><span style="font-size:11px; opacity:0.7;">← 태그 선택 시 서버 fetch + skeleton UI. 전체 페이지 리로드 없음. URL 자동 반영.</span>
+        </div>
+        <div class="wf-block trending">
+          [탭]  Popular  |  New
+        </div>
+        <div class="wf-block">
+          BracketCard Grid (필터 + 탭 기준으로 렌더링)
+        </div>
+      </div>
+
+      <h3 id="cat-tabs">탭 구성</h3>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>탭</th><th>대상</th><th>정렬 기준</th><th>의도</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Popular</strong></td>
+              <td>큐레이션 + UGC 혼합</td>
+              <td><code>trending_score</code> DESC<br><span style="font-size:11px; color:var(--fg-quiet);">UGC 쿼터 정책 적용</span></td>
+              <td>Maya에게 검증된 선택지 제공. <strong>상위 10개 중 최소 2개는 최근 30일 내 생성된 브라켓 보장</strong> — plays 선점 브라켓의 독점 방지.</td>
+            </tr>
+            <tr>
+              <td><strong>New</strong></td>
+              <td>전체 (큐레이션 + UGC)</td>
+              <td><code>created_at</code> DESC</td>
+              <td>최신 콘텐츠 단순 탐색. Sam의 신규 브라켓 진입점.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="decision green">
+        <div class="decision-icon">⚡</div>
+        <div class="decision-body">
+          <div class="decision-label">Popular 탭 UGC 쿼터 정책</div>
+          <div class="decision-text"><strong>Popular 상위 10개 중 최소 2개는 최근 30일 내 생성된 브라켓을 보장한다.</strong> 큐레이션 브라켓의 초기 plays 선점으로 UGC가 영구 하위에 머무는 구조를 방지. UGC 제작자(Sam)의 Popular 진입 가능성을 구조적으로 열어 UGC 생태계 선순환을 유도한다. 30일 내 생성된 브라켓이 2개 미만이면 쿼터 미적용(자연 정렬 유지).</div>
+        </div>
+      </div>
+
+      <div class="decision">
+        <div class="decision-icon">✂</div>
+        <div class="decision-body">
+          <div class="decision-label">제거: Top All-time 탭</div>
+          <div class="decision-text">Popular이 이미 높은 plays_7d를 반영하므로 중복. 탭 2개(Popular / New)가 최소이자 충분.</div>
+        </div>
+      </div>
+
+      <h3 id="cat-tags">태그 필터 UX <span class="changed-marker">CHANGED</span></h3>
+
+      <div class="decision green">
+        <div class="decision-icon">⚡</div>
+        <div class="decision-body">
+          <div class="decision-label">태그 필터 UX — 서버 fetch + skeleton UI <span class="changed-marker">CHANGED</span></div>
+          <div class="decision-text">태그 선택 시 <strong>전체 페이지 리로드 없이 그리드 영역만 서버 fetch로 교체</strong>. skeleton UI로 로딩 상태 표시 → 체감 응답성 확보. URL은 <code>/categories/kpop?tag=aespa</code>로 자동 반영되어 직접 접속·공유 시에도 SSR에서 동일한 필터 결과 제공. debounce 150ms 적용으로 빠른 탭 전환 중 불필요한 요청 방지.<br><br><strong>client-side 전체 로드 방식 제거 이유:</strong> 카테고리당 브라켓 수 증가 시 초기 로드 크기 상한을 정의할 수 없음. 서버 fetch는 확장성과 SSR URL 공유를 동시에 해결.</div>
+        </div>
+      </div>
+
+      <div class="decision">
+        <div class="decision-icon">📌</div>
+        <div class="decision-body">
+          <div class="decision-label">태그 필터 적용 범위 — MVP: K-pop만, 이후 전 카테고리</div>
+          <div class="decision-text">MVP 단계에서 태그 필터는 <strong>K-pop 카테고리만</strong> 활성화 (<code>['All', 'aespa', 'BLACKPINK', 'NewJeans', 'IVE', 'TWICE', 'ITZY', 'LE SSERAFIM', '(G)I-DLE', 'BTS', 'Stray Kids']</code>). 다른 카테고리(Anime, Gaming 등)는 태그 필터 없이 탭(Popular/New)만 표시. 추후 각 카테고리별 태그 데이터 구축 후 전 카테고리 지원 예정. 카테고리에 태그가 없으면 필터 바 자체를 렌더링하지 않음.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. Algorithms -->
+    <section class="section" id="algorithms">
+      <div class="section-header">
+        <div class="section-num">4</div>
+        <h2>알고리즘 확정안</h2>
+      </div>
+
+      <h3 id="algo-trending">Trending Score</h3>
+
+      <pre><code><span class="comment">-- Trending Score 계산</span>
+<span class="keyword">trending_score</span> = plays_7d
+              + (live_now_count * <span class="num">10</span>)
+              + (share_clicks_7d * <span class="num">5</span>)
+
+<span class="comment">-- 갱신: 1시간 캐시 (Cloudflare Cache API)</span>
+<span class="comment">-- live_now_count: live_sessions 테이블 active count JOIN (별도 인프라 없음)</span>
+<span class="comment">-- share_clicks_7d: analytics_events WHERE event = 'share_click'</span></code></pre>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>변수</th><th>가중치</th><th>선택 이유</th><th>단계</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>plays_7d</code></td>
+              <td>×1</td>
+              <td>기반 신뢰도. 7일 window는 최근성과 안정성의 균형.</td>
+              <td><span class="pill pill-purple">MVP</span></td>
+            </tr>
+            <tr>
+              <td><code>live_now_count</code></td>
+              <td>×10</td>
+              <td>Maya에게 가장 의미 있는 시그널. "지금 스트리머 3명이 하는 브라켓" = 채팅 반응 보장.</td>
+              <td><span class="pill pill-muted">Epic 5 후</span></td>
+            </tr>
+            <tr>
+              <td><code>share_clicks_7d</code></td>
+              <td>×5</td>
+              <td>Q3 공유 루프를 Trending에 직접 반영. 공유가 많은 브라켓이 더 노출됨.</td>
+              <td><span class="pill pill-muted">Analytics 쌓인 후</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card card-removed">
+        <strong style="color:#f87171;">제거: <code>plays_1h × 10</code> 가중치</strong>
+        <p style="margin:6px 0 0; font-size:13px; color:var(--fg-muted);">방송 종료 직후 순위 급락 현상 유발 → 사용자 혼란. <code>plays_7d</code>가 충분히 최근성을 반영함.</p>
+      </div>
+
+      <h3 id="algo-livenow">live_now 데이터 소스</h3>
+
+      <pre><code><span class="comment">-- live_sessions 테이블 하나로 Trending + BracketCard 배지 모두 해결</span>
+
+<span class="comment">-- Trending 집계에서:</span>
+<span class="keyword">LEFT JOIN</span> (
+  <span class="keyword">SELECT</span> bracket_pack_id, <span class="keyword">COUNT</span>(*) <span class="keyword">AS</span> live_now_count
+  <span class="keyword">FROM</span>   live_sessions
+  <span class="keyword">WHERE</span>  ended_at <span class="keyword">IS NULL</span>
+  <span class="keyword">GROUP BY</span> bracket_pack_id
+) live <span class="keyword">ON</span> live.bracket_pack_id = bp.id
+
+<span class="comment">-- BracketCard "🔴 Live 3" 배지: 동일 live_now_count 재사용</span></code></pre>
+
+      <p>별도 실시간 집계 인프라 없음. <code>live_sessions</code> 테이블(Epic 5에서 생성) JOIN만으로 Trending 가중치와 카드 배지 모두 처리.</p>
+    </section>
+
+    <!-- 5. Result Page Change -->
+    <section class="section" id="result">
+      <div class="section-header">
+        <div class="section-num">5</div>
+        <h2>결과 화면 모바일 레이아웃 변경</h2>
+      </div>
+
+      <p>Focus Group에서 Jin이 발견한 치명적 갭: <strong>결과 화면에서 "More in K-pop" 레일이 하단에 있으면 모바일에서 이미지 저장 후 탭을 닫아버림</strong>. 스크롤 없이 공유 버튼 근처에 위치해야 "다음 브라켓"으로 이어진다.</p>
+
+      <div class="two-col">
+        <div class="card card-removed">
+          <h4 style="margin-top:0; color:#f87171;">변경 전 (예상 순서)</h4>
+          <div class="wireframe" style="margin:0; padding:12px;">
+            <div class="wf-block" style="opacity:0.6;">[Champion Hero]</div>
+            <div class="wf-block" style="opacity:0.6;">[Stats + Community Verdict]</div>
+            <div class="wf-block" style="opacity:0.6;">[Share actions] ← 별도 섹션</div>
+            <div class="wf-block" style="opacity:0.6;">[Comments]</div>
+            <div class="wf-block" style="border-color:#f87171; background: rgba(239,68,68,0.15); color:#f87171;">[More in K-pop 3개] ← 못 봄</div>
+          </div>
+        </div>
+        <div class="card card-highlight">
+          <h4 style="margin-top:0; color: var(--accent-green);">변경 후 (확정 순서) <span class="changed-marker">CHANGED</span></h4>
+          <div class="wireframe" style="margin:0; padding:12px;">
+            <div class="wf-block featured" style="background: rgba(124,58,237,0.1);">[Champion Hero]<br><span style="font-size:11px; opacity:0.7;">↳ Share 버튼 내부 통합: Download · Copy · 𝕏 · Reddit · Discord</span></div>
+            <div class="wf-block trending">[More in K-pop — 4개 flex row] ← Share 바로 아래</div>
+            <div class="wf-block">[Stats + Community Verdict]</div>
+            <div class="wf-block">[Comments]</div>
+          </div>
+        </div>
+      </div>
+
+      <h3>"More in [category]" 레일 구성 정책</h3>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>항목</th><th>결정</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>대상 브라켓</strong></td>
+              <td>같은 카테고리의 <code>trending_score</code> 상위 (큐레이션 + UGC 혼합)</td>
+            </tr>
+            <tr>
+              <td><strong>표시 개수</strong></td>
+              <td>4개 (flex row) <span class="changed-marker">CHANGED</span><br><span style="font-size:11px; color:var(--fg-quiet);">데스크탑 4열 그리드가 자연스러움. 기존 설계의 "가로 스크롤 3개" 방식 변경.</span></td>
+            </tr>
+            <tr>
+              <td><strong>푸터 링크</strong></td>
+              <td>"See all in K-pop →" → 카테고리 페이지 (Sam의 발견 경로)</td>
+            </tr>
+            <tr>
+              <td><strong>UGC 포함 여부</strong></td>
+              <td>포함. <code>trending_score</code> 기준이므로 자연스럽게 큐레이션 우세하지만 인기 UGC도 진입 가능.</td>
+            </tr>
+            <tr>
+              <td><strong>현재 브라켓 제외</strong></td>
+              <td>결과 화면을 생성한 <code>bracket_pack_id</code>는 레일에서 명시적으로 제외. 방금 플레이한 브라켓이 레일에 재등장하면 클릭 동기 없음.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+      <div class="decision">
+        <div class="decision-icon">✂</div>
+        <div class="decision-body">
+          <div class="decision-label">범위 외: 결과 페이지 URL 구조</div>
+          <div class="decision-text">session URL(<code>/results/[sessionId]</code>) vs canonical URL(<code>/brackets/[id]</code>) 결정은 MVP 구현팀에 위임. <code>og:url</code>은 C1 OG 스펙에서 "canonical URL 기준 권장 검토"로 명시.</div>
+        </div>
+      </div>
+
+      <h3>결과 페이지 OG 메타태그 스펙 <span class="new-marker">NEW</span></h3>
+
+      <p>Discord · KakaoTalk · Reddit · Twitter 공유 시 링크 미리보기(OG 카드)가 Q3 유입의 실질적 동력. 동적 OG 태그 서버 렌더링 필수.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>태그</th><th>값</th><th>비고</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>og:title</code></td>
+              <td><code>[Champion 이름] wins [브라켓 이름]!</code></td>
+              <td>예: "NewJeans wins K-pop 4세대 아이돌 월드컵!"</td>
+            </tr>
+            <tr>
+              <td><code>og:image</code></td>
+              <td>챔피언 아이템 이미지 URL</td>
+              <td>브라켓 아이템 이미지 재사용. 최소 1200×630px 권장.</td>
+            </tr>
+            <tr>
+              <td><code>og:description</code></td>
+              <td><code>[plays_count]명이 플레이했습니다. 당신의 선택은?</code></td>
+              <td>plays_count = 해당 브라켓의 누적 세션 수.</td>
+            </tr>
+            <tr>
+              <td><code>og:url</code></td>
+              <td>결과 페이지 canonical URL</td>
+              <td>session URL이 아닌 브라켓 URL 기준 권장 검토 (C3 이슈와 연계).</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="decision">
+        <div class="decision-icon">⚡</div>
+        <div class="decision-body">
+          <div class="decision-label">구현 노트</div>
+          <div class="decision-text">OG 태그는 SSR(서버 렌더링) 시점에 삽입되어야 함. client-side hydration 후 삽입하면 Discord/Slack 크롤러가 읽지 못함. Epic 3 Story의 SSR 요구사항으로 명시.</div>
+        </div>
+      </div>
+
+    <!-- 6. Simulation -->
+    <section class="section" id="simulation">
+      <div class="section-header">
+        <div class="section-num">6</div>
+        <h2>Tree of Thoughts 경로 시뮬레이션 요약</h2>
+      </div>
+
+      <p>3가지 알고리즘 경로(Pure Algorithmic / Manual Curation / Hybrid)를 Day 1 → Month 3 → Month 6 시점에서 바이럴 루프 Q1·Q2·Q3 달성 여부로 평가한 결과.</p>
+
+      <div class="timeline">
+        <div class="timeline-point">
+          <div class="timeline-label">Day 1</div>
+          <div class="timeline-q"><span class="q-fail">✗</span> Path A — 모든 값 0, 홈 무의미</div>
+          <div class="timeline-q"><span class="q-pass">✓</span> Path B — Featured 수동, 작동</div>
+          <div class="timeline-q"><span class="q-pass">✓</span> <strong>Path C — B와 동일 + 단순 구조 우위</strong></div>
+        </div>
+        <div class="timeline-point">
+          <div class="timeline-label">Month 3</div>
+          <div class="timeline-q"><span class="q-prog">△</span> Path A — 인프라 부담, UGC 묻힘</div>
+          <div class="timeline-q"><span class="q-prog">△</span> Path B — UGC 생태계 안 만들어짐</div>
+          <div class="timeline-q"><span class="q-pass">✓</span> <strong>Path C — Q1·Q2·Q3 동시 진행</strong></div>
+        </div>
+        <div class="timeline-point">
+          <div class="timeline-label">Month 6</div>
+          <div class="timeline-q"><span class="q-prog">△</span> Path A — 작동하나 GM 번아웃 리스크</div>
+          <div class="timeline-q"><span class="q-fail">✗</span> Path B — Top 고정화, stale, 루프 고장</div>
+          <div class="timeline-q"><span class="q-pass">✓✓</span> <strong>Path C — Q1·Q2·Q3 모두 달성</strong></div>
+        </div>
+      </div>
+
+      <div class="decision green" style="margin-top:16px;">
+        <div class="decision-icon">✓</div>
+        <div class="decision-body">
+          <div class="decision-label">선택: Path C (Hybrid)</div>
+          <div class="decision-text">Day 1부터 Month 6까지 바이럴 루프 3가지 질문을 모두 진행시키는 유일한 경로. 1인 운영 가능한 복잡도 + UGC 생태계 선순환 + SEO 플라이휠 모두 충족.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. Personas -->
+    <section class="section" id="personas">
+      <div class="section-header">
+        <div class="section-num">7</div>
+        <h2>페르소나 검증</h2>
+      </div>
+
+      <div class="persona-row">
+        <div class="persona-card">
+          <div class="persona-name">Maya</div>
+          <div class="persona-role">Twitch 스트리머 · 45K · K-팝</div>
+          <div class="persona-item"><span class="ok">✓</span> Popular(live 가중치)로 오늘 방송용 빠른 발견</div>
+          <div class="persona-item"><span class="ok">✓</span> live_now × 10 = 방송 중 스트리머 수 → "지금 핫한 주제" 시그널</div>
+          <div class="persona-item"><span class="ok">✓</span> 결과 하단 레일 → 다음 방송 소재 예고 가능</div>
+          <div class="persona-item"><span class="warn">⚠</span> Featured 주 1~2회 갱신 부담 (GM)</div>
+          <div class="persona-item"><span class="warn">⚠</span> 태그 필터 in-place 필수 — 페이지 리로드 시 이탈</div>
+        </div>
+        <div class="persona-card">
+          <div class="persona-name">Jin</div>
+          <div class="persona-role">대학생 K-팝 팬 · Maya 시청자</div>
+          <div class="persona-item"><span class="ok">✓</span> 온보딩 없음 → 링크 클릭 즉시 플레이</div>
+          <div class="persona-item"><span class="ok">✓</span> 결과 화면 Share 바로 밑 "More in K-pop" → 이탈 방지 + 재발견</div>
+          <div class="persona-item"><span class="ok">✓</span> 모바일 최우선 레이아웃 반영</div>
+          <div class="persona-item"><span class="warn">⚠</span> 재방문 시 개인화 없음 — Category Nav + "More in" 레일이 대체</div>
+        </div>
+        <div class="persona-card">
+          <div class="persona-name">Sam</div>
+          <div class="persona-role">애니 팬 유튜버 · MHA · 12K</div>
+          <div class="persona-item"><span class="ok">✓</span> New 탭(created_at DESC) → 생성 직후 바로 노출</div>
+          <div class="persona-item"><span class="ok">✓</span> New → Popular 편입 파이프라인 → 제작 동기 유지</div>
+          <div class="persona-item"><span class="ok">✓</span> "More in [category]" 레일에 UGC 포함 → 장기 노출</div>
+          <div class="persona-item"><span class="warn">⚠</span> Popular 진입까지 plays 축적 시간 필요</div>
+          <div class="persona-item"><span class="warn">⚠</span> 태그 추가 UX가 편해야 카테고리 내 노출 가능</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8. PRD Impact -->
+    <section class="section" id="prd-impact">
+      <div class="section-header">
+        <div class="section-num">8</div>
+        <h2>PRD / Epics 영향 매핑</h2>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>변경사항</th><th>영향 위치</th><th>작업 유형</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>태그 필터 = 서버 fetch + skeleton UI</strong><br><span style="font-size:12px; color:var(--fg-muted);">전체 페이지 리로드 없이 그리드 영역만 교체. debounce 150ms. URL 자동 반영 + SSR 직접 접속 지원.</span></td>
+              <td>Story 1.3</td>
+              <td><span class="badge badge-changed">AC 수정</span></td>
+            </tr>
+            <tr>
+              <td><strong>카테고리 탭 = Popular + New (2탭)</strong><br><span style="font-size:12px; color:var(--fg-muted);">Popular: trending_score DESC / New: created_at DESC</span></td>
+              <td>Story 1.3</td>
+              <td><span class="badge badge-pending">AC 추가</span></td>
+            </tr>
+            <tr>
+              <td><strong>홈 섹션 레이블 고정: "Popular Brackets"</strong><br><span style="font-size:12px; color:var(--fg-muted);">"Trending Now" 레이블 및 전환 로직 제거. 정렬만 데이터 기반으로 동작.</span></td>
+              <td>Story 1.2</td>
+              <td><span class="badge badge-changed">AC 수정</span></td>
+            </tr>
+            <tr>
+              <td><strong>결과 화면 섹션 순서 변경</strong> <span class="changed-marker">CHANGED</span><br><span style="font-size:12px; color:var(--fg-muted);">Champion Hero (Share 내장) → More in [category] → Stats → Comments<br>※ Share는 Hero 카드 내부 통합. 별도 Share 섹션 없음.</span></td>
+              <td>Epic 3 (Story 3.x)</td>
+              <td><span class="badge badge-changed">레이아웃 명시</span></td>
+            </tr>
+            <tr>
+              <td><strong>"More in [category]" 레일</strong> <span class="changed-marker">CHANGED</span><br><span style="font-size:12px; color:var(--fg-muted);">결과 화면 Champion Hero 바로 아래, 4개 flex row (기존: 가로 스크롤 3개에서 변경)</span></td>
+              <td>Epic 3 (Story 3.x)</td>
+              <td><span class="badge badge-pending">신규 AC</span></td>
+            </tr>
+            <tr>
+              <td><strong>live_now = live_sessions JOIN</strong><br><span style="font-size:12px; color:var(--fg-muted);">Trending 쿼리 + BracketCard 배지 동일 소스</span></td>
+              <td>Story 1.2 + Epic 5</td>
+              <td><span class="badge badge-pending">구현 노트 추가</span></td>
+            </tr>
+            <tr>
+              <td><strong>Story 1.4 (For You) 스코프 제거</strong><br><span style="font-size:12px; color:var(--fg-muted);">온보딩, localStorage, For You 레일 전체 제거</span></td>
+              <td>Story 1.4</td>
+              <td><span class="badge badge-changed">스코프 삭제</span></td>
+            </tr>
+            <tr>
+              <td><strong>Popular 탭 UGC 쿼터 정책</strong> <span class="new-marker">NEW</span><br><span style="font-size:12px; color:var(--fg-muted);">상위 10개 중 최소 2개는 최근 30일 내 생성된 브라켓 보장. 30일 내 브라켓 2개 미만 시 미적용.</span></td>
+              <td>Story 1.3</td>
+              <td><span class="badge badge-pending">AC 추가</span></td>
+            </tr>
+            <tr>
+              <td><strong>홈 Trending 카테고리 캡</strong> <span class="new-marker">NEW</span><br><span style="font-size:12px; color:var(--fg-muted);">동일 카테고리 최대 3개. 초과분은 Trending 제외, 카테고리 페이지에서는 정상 노출.</span></td>
+              <td>Story 1.2</td>
+              <td><span class="badge badge-pending">AC 추가</span></td>
+            </tr>
+            <tr>
+              <td><strong>홈 "Browse by category" 5×2 카드 그리드</strong> <span class="new-marker">NEW</span><br><span style="font-size:12px; color:var(--fg-muted);">기존 설계의 가로 pill nav 대체. 각 카드: 이모지 + 16/9 placeholder 썸네일 + 레이블. 클릭 시 해당 카테고리 페이지.</span></td>
+              <td>Story 1.2 (홈 화면)</td>
+              <td><span class="badge badge-changed">레이아웃 변경</span></td>
+            </tr>
+            <tr>
+              <td><strong>태그 필터 범위: MVP K-pop만, 나중에 전 카테고리</strong> <span class="new-marker">NEW</span><br><span style="font-size:12px; color:var(--fg-muted);">MVP에서는 K-pop만 태그 필터 활성화. 다른 카테고리는 태그 없이 탭(Popular/New)만. 태그 없는 카테고리에서는 필터 바 미렌더링.</span></td>
+              <td>Story 1.3</td>
+              <td><span class="badge badge-pending">구현 노트</span></td>
+            </tr>
+            <tr>
+              <td><strong>"More in [category]" 현재 브라켓 제외</strong> <span class="new-marker">NEW</span><br><span style="font-size:12px; color:var(--fg-muted);">결과 화면을 생성한 bracket_pack_id를 레일 쿼리에서 WHERE 제외.</span></td>
+              <td>Epic 3 (Story 3.x)</td>
+              <td><span class="badge badge-pending">AC 추가</span></td>
+            </tr>
+            <tr>
+              <td><strong>결과 페이지 동적 OG 메타태그</strong> <span class="new-marker">NEW</span><br><span style="font-size:12px; color:var(--fg-muted);">og:title=[Champion] wins [브라켓], og:image=챔피언 이미지, og:description=[N]명 플레이. SSR 필수.</span></td>
+              <td>Epic 3 (Story 3.x)</td>
+              <td><span class="badge badge-pending">AC 추가</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 9. Implementation Order -->
+    <section class="section" id="impl-order">
+      <div class="section-header">
+        <div class="section-num">9</div>
+        <h2>구현 순서 권장</h2>
+      </div>
+
+      <h3>MVP — 반드시 있어야 하는 것 (데이터 없어도 작동)</h3>
+      <ul class="bullets">
+        <li><strong>"Popular Brackets" 섹션</strong> — 레이블 고정, 정렬은 <code>trending_score DESC</code> (데이터 없으면 <code>is_curated DESC, created_at DESC</code> 자동 적용). "Trending Now" 전환 로직 없음. Day 1 앵커 역할 겸임.</li>
+        <li><strong>"Browse by category" 5×2 카드 그리드</strong> <span class="changed-marker">CHANGED</span> — 홈 Popular Brackets 아래 카테고리 카드. 가로 pill nav 대체. 각 카드: 이모지 + placeholder 썸네일 + 레이블.</li>
+        <li><strong>New 탭 = <code>created_at</code> DESC</strong> — Sam의 신규 UGC 즉시 노출. 구현 단순.</li>
+        <li><strong>카테고리 페이지 태그 in-place 필터 (K-pop만)</strong> — Maya 방송 준비 워크플로우 핵심. MVP에서는 K-pop만 활성화.</li>
+        <li><strong>결과 화면 "More in [category]" 레일 — 4개 flex row</strong> <span class="changed-marker">CHANGED</span> — Q2 세션 깊이에 직접 기여. Share 버튼은 Champion Hero 카드 내부. More in 레일은 Hero 바로 아래.</li>
+      </ul>
+
+      <h3>Growth 초기 — 데이터 쌓인 후 추가</h3>
+      <ul class="bullets">
+        <li><strong><code>live_now × 10</code> 가중치</strong> — Epic 5 (Streamer Live Mode) 완료 후.</li>
+        <li><strong><code>share_clicks_7d × 5</code> 가중치</strong> — PostHog analytics 이벤트 충분히 쌓인 후.</li>
+      </ul>
+    </section>
+
+    <!-- 10. Removed -->
+    <section class="section" id="removed">
+      <div class="section-header">
+        <div class="section-num">10</div>
+        <h2>제거 결정사항 (Occam's Razor)</h2>
+      </div>
+
+      <p>이하 항목들은 명시적으로 <strong>구현하지 않기로 결정</strong>한 것들이다. "나중에 추가하면 되지"라는 접근 방지를 위해 이유와 함께 기록.</p>
+
+      <div class="card card-removed">
+        <strong style="color:#f87171;">For You 레일 + 온보딩 플로우</strong>
+        <p style="margin:6px 0 0; font-size:13px; color:var(--fg-muted);">이 플랫폼의 발견 구조는 소셜 공유 기반이지 개인화 알고리즘이 아님. 이상형 월드컵(piku.co.kr) 등 유사 플랫폼은 For You 없이 성공. 주 진입 경로(Q3 공유 링크)는 홈을 거치지 않으므로 온보딩 완료율이 낮다. 개인화는 재방문 헤비유저의 니즈이며 초기 MVP 범위 밖.</p>
+      </div>
+
+      <div class="card card-removed">
+        <strong style="color:#f87171;">New &amp; Rising 탭</strong>
+        <p style="margin:6px 0 0; font-size:13px; color:var(--fg-muted);">JTBD 불명확 — 탭을 "쓰는" 사람이 없음. "New"와 네이밍 혼동. MVP 기준 UGC 50개 미만이면 빈 탭. plays_24h 집계 파이프라인 등 숨겨진 기술 복잡도 존재. Tiermaker 등 성공한 유사 플랫폼도 2탭(Popular/New)으로 충분. UGC 발견은 New 탭 + "More in [category]" 레일로 대체.</p>
+      </div>
+
+      <div class="card card-removed">
+        <strong style="color:#f87171;">localStorage (<code>sodo:interests</code>, <code>sodo:play:*</code>)</strong>
+        <p style="margin:6px 0 0; font-size:13px; color:var(--fg-muted);">For You와 New &amp; Rising 제거로 사용처 없음. 완주 이력 추적은 "완주"의 정의, 저장 시점, 만료 등 엣지케이스가 많음. 재플레이는 Q2(세션 수) 관점에서 오히려 긍정적이므로 완주 필터가 불필요.</p>
+      </div>
+
+      <div class="card card-removed">
+        <strong style="color:#f87171;">Top All-time 탭</strong>
+        <p style="margin:6px 0 0; font-size:13px; color:var(--fg-muted);">Popular이 높은 plays_7d를 이미 반영. 탭이 늘어날수록 인지 부담 증가. 초기 큐레이션 브라켓의 영구 상단 독점 문제 악화.</p>
+      </div>
+
+      <div class="card card-removed">
+        <strong style="color:#f87171;"><code>plays_1h × 10</code> 가중치</strong>
+        <p style="margin:6px 0 0; font-size:13px; color:var(--fg-muted);">방송 종료 직후 순위 급락 현상 유발. 사용자가 새로고침할 때마다 순위가 다른 것은 신뢰성 문제. <code>plays_7d</code>가 충분히 최근성을 반영함.</p>
+      </div>
+
+      <div class="card card-removed">
+        <strong style="color:#f87171;">Rising decay 공식 <code>plays_24h / sqrt(age_hours + 2)</code></strong>
+        <p style="margin:6px 0 0; font-size:13px; color:var(--fg-muted);">New &amp; Rising 탭 제거로 함께 불필요해짐.</p>
+      </div>
+
+      <div class="card card-removed">
+        <strong style="color:#f87171;">Featured 섹션 (수동 큐레이션)</strong>
+        <p style="margin:6px 0 0; font-size:13px; color:var(--fg-muted);">단일 브래킷이 홈 상단을 점유하면 해당 카테고리 팬에게만 유효하고 나머지 카테고리 팬에게는 노이즈. Q1/Q2/Q3 어디에도 직접 기여하지 않음. Trending의 Cold Start fallback(큐레이션 브래킷 우선 정렬)이 Day 1 앵커 역할을 대체. Weekly 수동 갱신 운영 부담도 제거.</p>
+      </div>
+    </section>
+
+    <!-- 11. Approval -->
+    <section class="section" id="approval">
+      <div class="section-header">
+        <div class="section-num">11</div>
+        <h2>승인 체크리스트</h2>
+      </div>
+
+      <p>이 문서의 각 결정사항을 검토 후 체크. 승인 완료 후 Story 1.2, 1.3 AC 업데이트 및 Epic 3 레이아웃 명세 반영. <strong>Story 1.4 (For You)는 스코프 제거.</strong></p>
+
+      <div class="card">
+        <ul class="checklist">
+          <li>
+            <div class="check-box"></div>
+            <div><strong>Option C 구조 승인</strong> — 홈과 카테고리 페이지의 Shell 공유 / Section 분리 방향</div>
+          </li>
+          <li>
+            <div class="check-box"></div>
+            <div><strong>Trending 알고리즘 확정</strong> — <code>plays_7d + (live_now × 10) + (share_clicks_7d × 5)</code>, 1시간 캐시</div>
+          </li>
+          <li>
+            <div class="check-box"></div>
+            <div><strong>Cold Start 정책 승인</strong> — score = 0 시 "Popular Brackets" 레이블 전환</div>
+          </li>
+          <li>
+            <div class="check-box"></div>
+            <div><strong>카테고리 탭 2개 확정</strong> — Popular (trending_score DESC) + New (created_at DESC)</div>
+          </li>
+          <li>
+            <div class="check-box"></div>
+            <div><strong>태그 필터 UX 변경 승인</strong> — 서버 fetch + skeleton UI + debounce 150ms, URL 자동 반영 (Story 1.3 AC 수정 필요)</div>
+          </li>
+          <li>
+            <div class="check-box"></div>
+            <div><strong>태그 필터 범위 승인</strong> <span class="new-marker">NEW</span> — MVP K-pop만, 전 카테고리 지원은 추후. 태그 없는 카테고리 필터 바 미렌더링.</div>
+          </li>
+          <li>
+            <div class="check-box"></div>
+            <div><strong>홈 "Browse by category" 카드 그리드 승인</strong> <span class="new-marker">NEW</span> — 5×2 카드 그리드 (이모지+썸네일+레이블). 기존 가로 pill nav 대체.</div>
+          </li>
+          <li>
+            <div class="check-box"></div>
+            <div><strong>결과 화면 섹션 순서 승인</strong> <span class="changed-marker">CHANGED</span> — Champion Hero (Share 내장) → More in [category] 4개 → Stats → Comments (Epic 3 영향)</div>
+          </li>
+          <li>
+            <div class="check-box"></div>
+            <div><strong>"More in [category]" 레일 정책 승인</strong> <span class="changed-marker">CHANGED</span> — trending_score 상위, 4개 flex row, UGC 혼합 포함</div>
+          </li>
+          <li>
+            <div class="check-box"></div>
+            <div><strong>For You + 온보딩 + localStorage 제거 승인</strong> — Story 1.4 스코프 삭제</div>
+          </li>
+          <li>
+            <div class="check-box"></div>
+            <div><strong>제거 결정사항 확인</strong> — Featured 섹션, For You, 온보딩, localStorage, New &amp; Rising 탭, Top All-time 탭, plays_1h 가중치, decay 공식</div>
+          </li>
+          <li>
+            <div class="check-box"></div>
+            <div><strong>구현 순서 승인</strong> — MVP 5개 항목 우선, live_now·share_clicks는 데이터 쌓인 후</div>
+          </li>
+          <li>
+            <div class="check-box"></div>
+            <div><strong>Popular 탭 UGC 쿼터 정책 승인</strong> — 상위 10개 중 최소 2개는 최근 30일 내 생성 브라켓 보장 (Story 1.3 AC)</div>
+          </li>
+          <li>
+            <div class="check-box"></div>
+            <div><strong>홈 Trending 카테고리 캡 승인</strong> — 동일 카테고리 최대 3개 (Story 1.2 AC)</div>
+          </li>
+          <li>
+            <div class="check-box"></div>
+            <div><strong>태그 필터 방식 변경 승인</strong> — client-side 전체 로드 → 서버 fetch + skeleton UI + debounce 150ms (Story 1.3 AC 수정)</div>
+          </li>
+          <li>
+            <div class="check-box"></div>
+            <div><strong>"More in [category]" 현재 브라켓 제외 승인</strong> — 결과 화면 레일에서 방금 플레이한 bracket_pack_id 제외 (Epic 3 AC)</div>
+          </li>
+          <li>
+            <div class="check-box"></div>
+            <div><strong>결과 페이지 동적 OG 메타태그 승인</strong> — og:title / og:image / og:description SSR 렌더링 (Epic 3 AC)</div>
+          </li>
+        </ul>
+      </div>
+
+      <div style="margin-top: 20px; padding: 16px 20px; background: var(--bg-card); border: 1px solid var(--border-ring); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: space-between;">
+        <div>
+          <div style="font: 600 12px/1 var(--font-mono); color: var(--fg-muted); margin-bottom: 4px;">DOCUMENT STATUS</div>
+          <div style="font: 700 14px/1 var(--font-sans); color: var(--accent-green);">Design Updated — docs/design 구현 결정사항 반영 완료. 승인 항목 재검토 필요.</div>
+        </div>
+        <div style="text-align: right;">
+          <div style="font: 600 11px/1 var(--font-mono); color: var(--fg-quiet); margin-bottom: 4px;">LAST UPDATED</div>
+          <div style="font: 500 13px/1 var(--font-sans); color: var(--fg-muted);">2026-05-13</div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+</body>
+</html>
