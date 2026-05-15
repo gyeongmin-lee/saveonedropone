@@ -179,6 +179,6 @@ Success criteria:
 - [x] 5.5 Handoff plan established.
 - [x] 6.1 Checklist completion reviewed.
 - [x] 6.2 Proposal accuracy reviewed.
-- [!] 6.3 Explicit approval pending from GM after review.
+- [x] 6.3 Explicit approval received from GM after review.
 - [N/A] 6.4 `sprint-status.yaml` update not required; no epic/story status change.
 - [x] 6.5 Next steps and handoff plan documented.

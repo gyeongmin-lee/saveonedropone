@@ -53,6 +53,7 @@ Implementation agents MUST read this brief before using the rest of this archite
 - Public bracket/result/category pages must render SEO metadata and OG metadata server-side.
 - Public visibility must be decided before metadata, cache headers, ad eligibility, and rendering.
 - Use `docs/design/README.md` plus the relevant `docs/design/*.html` and `docs/design/**/*.jsx` files as the visual source of truth. Production tokens should be extracted into app code from those references; do not invent or fork brand colors.
+- Use Storybook or an equivalent isolated component environment for reusable UI work. It must load production design tokens and must not introduce a competing visual theme.
 
 ### Where Code Belongs
 
@@ -655,6 +656,29 @@ Implement shared visibility and metadata policy modules used by public route loa
 - Negative: More upfront policy modeling is needed.
 - Negative: Overly strict central policy could slow iteration unless kept small and explicit.
 
+#### ADR-007: UI Foundation and Component Development
+
+**Status:** Accepted
+
+**Context:**
+The product has substantial UI complexity and existing visual prototypes in `docs/design/`, but production code is not scaffolded yet. Future implementation agents need a consistent way to build and review components without letting starter styles, Tailwind defaults, or a broad pre-styled component library become a second design system.
+
+**Decision:**
+Use Storybook as the isolated component development environment for React components. Storybook must load the same production token and base style entries as the app, including `app/styles/tokens.css`.
+
+Keep `app/styles/tokens.css` as the source of truth for product UI tokens derived from `docs/design/`. Tailwind may be retained or added only as a utility authoring layer that consumes those CSS custom-property tokens; Tailwind defaults must not become the brand palette, spacing system, radius system, or typography source.
+
+Do not introduce a broad pre-styled component library during scaffold setup. Avoid shadcn/ui, Chakra, MUI, Mantine, DaisyUI, or similar app-wide UI kits unless a later explicit ADR accepts the design-system impact.
+
+Use Lucide as the preferred production icon set when icons are needed. Use Radix UI as the preferred primitive layer for accessibility-sensitive interactions such as Dialog, Popover, Tooltip, DropdownMenu, Tabs, Switch, Checkbox, RadioGroup, and Select. Install Radix packages primitive-by-primitive when a story needs the interaction, and wrap primitives in app-owned or feature-owned components before reuse so styling remains controlled by project tokens.
+
+**Consequences:**
+- Positive: Future UI stories can validate components outside route/page composition while sharing production styling.
+- Positive: Design tokens remain portable across routes, Storybook, and component-level checks.
+- Positive: Accessibility-sensitive interactions have a default primitive strategy without prematurely installing unused packages.
+- Negative: First use of each Radix primitive must establish a small local wrapper pattern.
+- Negative: Storybook adds setup and verification overhead to the scaffold story.
+
 ### Decision Impact Analysis
 
 **Implementation Sequence:**
@@ -710,6 +734,8 @@ All implementation agents MUST follow these rules:
 10. Check Cloudflare Workers compatibility before adding server-side packages.
 11. Route high-risk writes through a shared rate-limit helper.
 12. Do not expose service-role credentials or admin-only policy details to browser code.
+13. Keep Storybook and production routes on the same token CSS; do not introduce a competing UI kit or visual theme.
+14. Do not hand-roll accessibility-sensitive primitives such as dialogs, menus, popovers, tabs, or tooltips when a proven primitive such as Radix is appropriate.
 
 ### Memory Anchors for Agents
 
@@ -722,6 +748,8 @@ Use these distinctions when implementing:
 - **Realtime announces; checkpoint restores.** Realtime events coordinate active clients, durable checkpoints recover the current broadcast state.
 - **Local in progress, server on share.** Anonymous play progress stays local; completed shareable results and aggregate summaries persist server-side.
 - **Actions use envelopes; loaders use route data.** Action/fetcher responses use typed `{ ok, ... }`; loaders return route data, redirects, or thrown responses.
+- **Tokens before utilities.** CSS custom properties from `app/styles/tokens.css` define the product look; Tailwind, Storybook, and component wrappers consume those tokens.
+- **Primitive, then wrapper.** Radix primitives are introduced only when needed and wrapped in `app/components/` or `app/features/<feature>/` before reuse.
 
 If an implementation agent is unsure where code belongs, choose by dependency:
 

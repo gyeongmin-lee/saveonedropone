@@ -293,7 +293,8 @@ So that all later product stories build on the correct framework, runtime, and p
 **Given** the project will deploy to Cloudflare Workers
 **When** base configuration is added
 **Then** Cloudflare-compatible config such as Wrangler/Vite/React Router configuration is present as required by the selected scaffold
-**And** server-side code added in this story uses Workers-compatible APIs.
+**And** server-side code added in this story uses Workers-compatible APIs
+**And** Story 1.1 may perform an optional Cloudflare smoke deploy only to verify the Worker runtime; Supabase-backed staging deployment should happen during or after Story 1.2, and product-visible staging review should begin after Story 1.3 creates the SSR Home Browse page.
 
 **Given** later stories need shared architecture boundaries
 **When** the initial source tree is prepared
@@ -314,6 +315,12 @@ So that all later product stories build on the correct framework, runtime, and p
 **When** they inspect the scaffold
 **Then** the README or project notes identify React Router 7 framework mode, Cloudflare Workers, Supabase, and design-token constraints
 **And** dependency installation/build commands are documented enough for local verification.
+
+**Given** later stories need consistent UI implementation and isolated review
+**When** the scaffold is prepared
+**Then** Storybook or an equivalent isolated component environment is configured for React components
+**And** it shares the production token CSS
+**And** it does not introduce a competing visual theme or broad pre-styled component library.
 
 ### Story 1.2: Public Bracket Pack Data Foundation
 

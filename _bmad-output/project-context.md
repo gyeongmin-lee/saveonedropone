@@ -16,7 +16,7 @@ _AI 에이전트가 이 프로젝트의 코드를 구현할 때 반드시 따라
 | 레이어 | 기술 |
 |--------|------|
 | 프레임워크 | **React Router 7 (framework mode)** |
-| UI | React + CSS Custom Properties |
+| UI | React + CSS Custom Properties + Storybook |
 | 디자인 기준 | `docs/design/README.md`와 `docs/design/*.html` / `docs/design/**/*.jsx` |
 | DB / Auth / Storage / Realtime | **Supabase** (Postgres, Auth, Storage, Realtime Broadcast) |
 | 백엔드 런타임 / 배포 | **Cloudflare Workers** |
@@ -42,6 +42,17 @@ React Router 7 framework mode는 Remix 패턴과 동일하다: `loader` / `actio
 | 커뮤니티 랭킹 모달 | `docs/design/Community Ranking.html`, `docs/design/community-ranking/states.jsx` |
 
 프로토타입의 inline style 값은 현재 시각 기준이다. Production 구현에서는 반복되는 색상, 타이포그래피, spacing을 `app/styles/tokens.css` 같은 앱 내부 토큰 엔트리로 추출하되, 값과 컴포넌트 구성은 위 디자인 파일에서 직접 파생한다.
+
+### UI 개발 환경과 라이브러리 규칙
+
+- Storybook은 reusable UI와 feature UI를 route/page composition 밖에서 검토하는 isolated component environment다.
+- Storybook은 production route와 같은 `app/styles/tokens.css` 및 base app styles를 로드해야 한다.
+- `app/styles/tokens.css`가 UI token source of truth다. Tailwind는 사용할 수 있지만 CSS custom property token을 소비하는 utility layer로만 사용한다.
+- Tailwind default palette, spacing, radius, typography가 브랜드 기준이 되면 안 된다.
+- Lucide를 production icon 기본 선택지로 사용한다.
+- Radix UI는 Dialog, Popover, Tooltip, DropdownMenu, Tabs, Switch, Checkbox, RadioGroup, Select 같은 accessibility-sensitive primitive의 기본 선택지다.
+- Radix는 필요한 primitive별로 설치하고, 재사용 전 `app/components/` 또는 `app/features/<feature>/`의 app-owned wrapper로 감싼다.
+- scaffold 단계에서 shadcn/ui, Chakra, MUI, Mantine, DaisyUI 같은 broad pre-styled component library를 도입하지 않는다. 이후 필요하면 별도 ADR이 필요하다.
 
 ### 핵심 토큰 값 (참고용, 코드엔 var() 사용)
 

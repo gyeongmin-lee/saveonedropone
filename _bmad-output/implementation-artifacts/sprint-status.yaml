@@ -1,0 +1,100 @@
+# generated: 2026-05-13T14:12:03Z
+# last_updated: 2026-05-13T22:58:00Z
+# project: saveonedropone
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: /workspaces/saveonedropone/_bmad-output/implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog -> in-progress: Automatically when first story is created (via create-story)
+#   - in-progress -> done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - Developer typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+
+generated: 2026-05-13T14:12:03Z
+last_updated: 2026-05-14T00:00:00Z
+project: saveonedropone
+project_key: NOKEY
+tracking_system: file-system
+story_location: /workspaces/saveonedropone/_bmad-output/implementation-artifacts
+
+development_status:
+  epic-1: in-progress
+  1-1-initial-cloudflare-react-router-scaffold: review
+  1-2-public-bracket-pack-data-foundation: backlog
+  1-3-ssr-home-browse-page: backlog
+  1-4-category-and-tag-browse-routes: backlog
+  epic-1-retrospective: optional
+  epic-2: backlog
+  2-1-pure-tournament-engine-with-byes: backlog
+  2-2-ssr-public-bracket-play-entry-and-tournament-size-selection: backlog
+  2-3-matchup-selection-loop: backlog
+  2-4-undo-and-restart-controls: backlog
+  2-5-local-progress-persistence-and-resume: backlog
+  epic-2-retrospective: optional
+  epic-3: backlog
+  3-1-result-persistence-on-tournament-completion: backlog
+  3-2-ssr-public-result-page-with-champion-and-metadata: backlog
+  3-3-result-sharing-actions-and-play-again: backlog
+  3-4-final-path-and-community-summary-panels: backlog
+  3-5-full-community-ranking-view: backlog
+  3-6-full-bracket-modal-and-unified-bracket-image-export: backlog
+  3-7-comments-and-report-entry-surfaces-on-result-page: backlog
+  epic-3-retrospective: optional
+  epic-4: backlog
+  4-1-creator-auth-gate-for-create-flow: backlog
+  4-2-create-composer-shell-from-design-reference: backlog
+  4-3-smart-paste-for-youtube-urls-and-text-entries: backlog
+  4-4-image-url-and-local-batch-upload-intake: backlog
+  4-5-entry-editing-and-completion-validation: backlog
+  4-6-tournament-settings-and-seeding-controls: backlog
+  4-7-publish-bracket-pack-with-visibility-and-public-url: backlog
+  epic-4-retrospective: optional
+  epic-5: backlog
+  5-1-live-session-checkpoint-model: backlog
+  5-2-twitch-chat-collection-oauth-connection: backlog
+  5-3-twitch-eventsub-webhook-and-vote-aggregation: backlog
+  5-4-streamer-live-mode-panel-and-vote-display: backlog
+  5-5-live-mode-match-advance-and-tally-reset: backlog
+  5-6-live-chat-feed-display-without-persistence: backlog
+  epic-5-retrospective: optional
+  epic-6: backlog
+  6-1-anonymous-result-comments-with-rate-limits: backlog
+  6-2-public-report-submission-flow: backlog
+  6-3-admin-report-queue-and-target-review: backlog
+  6-4-moderation-actions-and-visibility-policy-completion: backlog
+  6-5-dmca-request-intake-and-action-log: backlog
+  6-6-public-unavailable-and-locked-states: backlog
+  epic-6-retrospective: optional
+  epic-7: backlog
+  7-1-deferred-live-streamer-discovery-sidebar: backlog
+  7-2-deferred-bracket-search: backlog
+  7-3-deferred-favorites-and-play-history: backlog
+  7-4-deferred-bracket-pack-duplication: backlog
+  7-5-deferred-streamer-dashboard: backlog
+  7-6-deferred-advertising-slot-support: backlog
+  7-7-deferred-premium-and-sponsored-branding: backlog
+  epic-7-retrospective: optional

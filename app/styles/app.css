@@ -1,0 +1,44 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-width: var(--layout-min-width);
+  min-height: 100%;
+  margin: 0;
+  background: var(--color-bg-page);
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+}
+
+a {
+  color: inherit;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.display {
+  font-weight: var(--display-weight);
+  letter-spacing: var(--display-letter-spacing);
+}
+
+.ring {
+  box-shadow: 0 0 0 1px var(--color-border);
+}
+
+.error-shell {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 64px 24px;
+}
