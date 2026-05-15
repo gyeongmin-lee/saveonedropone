@@ -35,6 +35,8 @@ npm run build-storybook
 
 `npm run dev` starts the React Router development server. `npm run deploy` builds and deploys with Wrangler.
 
+No automated test suite exists yet; verification currently relies on typecheck, build, and Storybook build commands.
+
 ## Environment
 
 Copy `.env.example` for local placeholders. Server-only credentials such as `SUPABASE_SERVICE_ROLE_KEY` must be configured as Worker secrets and never exposed to browser bundles.

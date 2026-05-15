@@ -1,6 +1,6 @@
 # Story 1.1: Initial Cloudflare React Router Scaffold
 
-Status: review
+Status: done
 
 ## Story
 
@@ -62,6 +62,15 @@ so that all later product stories build on the correct framework, runtime, and p
   - [x] Run install/build/typecheck commands supported by the generated scaffold.
   - [x] If a test command exists, run it; otherwise document that no test suite exists yet.
   - [x] Inspect `git diff` for accidental secrets, nested scaffold directories, unrelated generated files, and product schema creep.
+
+### Review Findings
+
+- [x] [Review][Patch] Commit generated Worker env type file [worker-configuration.d.ts:1]
+- [x] [Review][Patch] Production installs can fail from `postinstall` running Wrangler [package.json:10]
+- [x] [Review][Patch] Root package does not declare the Node version required by Vite [package.json:1]
+- [x] [Review][Dismiss] Tailwind theme tokens duplicate production token values instead of consuming CSS custom properties [app/styles/tokens.css:36] — dismissed, intentional Tailwind v4 theme mapping
+- [x] [Review][Patch] README does not document that no test suite exists yet [README.md:25]
+- [x] [Review][Patch] Storybook Vite plugin filtering keeps nested app runtime plugins [./.storybook/main.ts:6]
 
 ## Dev Notes
 

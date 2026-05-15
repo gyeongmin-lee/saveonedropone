@@ -3,19 +3,22 @@ import type { PluginOption } from "vite";
 import tailwindcss from "@tailwindcss/vite";
 import tsconfigPaths from "vite-tsconfig-paths";
 
-function withoutAppRuntimePlugins(plugins: PluginOption[] = []) {
-  return plugins.filter((plugin) => {
+function withoutAppRuntimePlugins(plugins: PluginOption[] = []): PluginOption[] {
+  return plugins.flatMap((plugin) => {
     if (
       !plugin ||
-      Array.isArray(plugin) ||
       typeof plugin === "function" ||
       plugin instanceof Promise
     ) {
-      return true;
+      return [plugin];
+    }
+
+    if (Array.isArray(plugin)) {
+      return withoutAppRuntimePlugins(plugin);
     }
 
     const name = "name" in plugin ? plugin.name ?? "" : "";
-    return !name.includes("react-router") && !name.includes("cloudflare");
+    return name.includes("react-router") || name.includes("cloudflare") ? [] : [plugin];
   });
 }
 

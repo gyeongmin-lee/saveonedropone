@@ -2,6 +2,7 @@
 .env
 /node_modules/
 *.tsbuildinfo
+debug-storybook.log
 
 # React Router
 /.react-router/
@@ -12,7 +13,6 @@
 .mf
 .wrangler
 .dev.vars*
-worker-configuration.d.ts
 
 
 !.dev.vars.example
